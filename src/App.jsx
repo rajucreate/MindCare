@@ -1,34 +1,38 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 
 function App() {
   const [count, setCount] = useState(0)
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div id="Home">
+      <div className="header">
+        <h1>MindCare</h1>
+        <p>Mental Health Support Platform for Students</p>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
+
+      <div className="credentialCard">
+        <h1>Welcome</h1>
+        <p>Sign in to access your mental health resources and support</p>
+        <div className="button-section">
+          <button className="sign-in-btn">Sign In</button>
+          <button className="sign-up-btn">Sign Up</button>
+        </div>
+        <div className="info-details">
+          <div className="sign-in-form">
+            <p>Email</p>
+            <input type="text" placeholder="your.email@university" pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$" required />
+            <p>Password</p>
+            <input type="password" placeholder="password" required />
+            <p>I am a</p>
+            <select>
+              <option value="student">Student</option>
+              <option value="counselor">Administrator</option>
+            </select>
+          </div>
+        </div>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    </div>
   )
 }
 
