@@ -11,7 +11,6 @@ class Homepage extends Component {
   }
 
   componentDidMount() {
-    // Fetch the user object from localStorage on mount
     const userStr = localStorage.getItem("user");
     if (userStr) {
       this.setState({ user: JSON.parse(userStr) });
@@ -104,6 +103,7 @@ class Homepage extends Component {
             </div>
           </div>
 
+          {/* Overview Tab */}
           <div id="overview" className={`tab-content ${activeTab === "overview" ? "active" : ""}`}>
             <div className="section-grid">
               <div className="subcard">
@@ -162,6 +162,7 @@ class Homepage extends Component {
             </div>
           </div>
 
+          {/* Resources Tab */}
           <div id="resources" className={`tab-content ${activeTab === "resources" ? "active" : ""}`}>
             <div className="section-grid">
               <div className="subcard">
@@ -212,16 +213,80 @@ class Homepage extends Component {
             </div>
           </div>
 
+          {/* Therapy Tab */}
           <div id="therapy" className={`tab-content ${activeTab === "therapy" ? "active" : ""}`}>
-            <div className="coming-soon">Therapy content coming soon…</div>
+            <div className="section-grid">
+              <div className="subcard therapy-card">
+                <h3>Your Therapists</h3>
+                <p>
+                  <strong>Dr. Sarah Johnson</strong>
+                  <br />
+                  Cognitive Behavioral Therapy
+                </p>
+                <p>
+                  <strong>Dr. Alan Rivera</strong>
+                  <br />
+                  Mindfulness-Based Therapy
+                </p>
+                <button>View Profiles</button>
+              </div>
+              <div className="subcard therapy-card">
+                <h3>Upcoming Sessions</h3>
+                <p>
+                  <strong>Tomorrow</strong> — 2:00 PM<br />
+                  Session with Dr. Sarah Johnson
+                </p>
+                <p>
+                  <strong>Friday</strong> — 4:00 PM<br />
+                  Group Therapy: Anxiety Support
+                </p>
+                <button>Book New Session</button>
+              </div>
+            </div>
           </div>
 
+          {/* Forums Tab */}
           <div id="forums" className={`tab-content ${activeTab === "forums" ? "active" : ""}`}>
-            <div className="coming-soon">Forums content coming soon…</div>
+            <div className="section-grid">
+              <div className="subcard forum-card">
+                <h3>Popular Discussions</h3>
+                <p>
+                  <strong>Dealing with Exam Stress</strong>
+                  <br />
+                  42 replies · Active 1h ago
+                </p>
+                <p>
+                  <strong>Balancing Studies & Social Life</strong>
+                  <br />
+                  18 replies · Active 3h ago
+                </p>
+                <button>Join Discussion</button>
+              </div>
+              <div className="subcard forum-card">
+                <h3>Recent Activity</h3>
+                <p>
+                  <strong>Mindfulness & Meditation</strong>
+                  <br />
+                  8 new replies · 2h ago
+                </p>
+                <p>
+                  <strong>Sleep & Routine</strong>
+                  <br />
+                  5 new replies · 5h ago
+                </p>
+                <button>Start New Discussion</button>
+              </div>
+            </div>
           </div>
 
+          {/* Support Tab */}
           <div id="support" className={`tab-content ${activeTab === "support" ? "active" : ""}`}>
-            <div className="coming-soon">Support content coming soon…</div>
+              <div className="crisis-card">
+                <h2>Need Help Now?</h2>
+                <p>You are not alone. If you or someone you know is in crisis, call or chat with 988 for immediate help.</p>
+                <button className="crisis-btn pulse">Call 988</button>
+                <button className="crisis-btn">Chat Now</button>
+            </div>
           </div>
         </div>
       </div>
