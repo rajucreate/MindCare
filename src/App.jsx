@@ -1,68 +1,59 @@
 import React, { useRef, useState } from 'react';
+import { useNavigate, BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import Homepage from './Homepage'; // Import your component
 
-function App() {
+function LoginSignup() {
   const containerRef = useRef(null);
   const [isActive, setIsActive] = useState(false);
-
-  const apiKey = "0de4382d43f54c67a9ae9d56ac8e121b";
-
-  // Sign In
-  const handleSignIn = async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const email = formData.get("email");
-    const password = formData.get("password");
-
-    const res = await fetch("http://localhost:5000/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await res.json();
-    if (data.success) {
-      alert("Login successful!");
-      localStorage.setItem("user", JSON.stringify({ email: data.user.email, name: data.user.name }));
-      navigate("/homeAfterLogin");
-    } else {
-      alert(data.message || "Login failed");
-    }
-  };
+  const navigate = useNavigate();
 
   // Sign Up
-  const handleSignUp = async (e) => {
+  const handleSignUp = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const name = formData.get("name");
     const email = formData.get("email");
     const password = formData.get("password");
+    const users = JSON.parse(localStorage.getItem("users")) || [];
 
-    const res = await fetch("http://localhost:5000/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
-    });
+    const existingUser = users.find((u) => u.email === email);
+    if (existingUser) {
+      alert("User already exists. Please sign in.");
+      setIsActive(false);
+      return;
+    }
 
-    const data = await res.json();
-    if (data.success) {
-      alert("Signup successful!");
-      localStorage.setItem("user", JSON.stringify({ email, name }));
-      navigate("/homeAfterLogin");
+    users.push({ name, email, password });
+    localStorage.setItem("users", JSON.stringify(users));
+    localStorage.setItem("user", JSON.stringify({ name, email }));
+    alert("Signup successful!");
+    setIsActive(false);
+  };
+
+  // Sign In
+  const handleSignIn = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const email = formData.get("email");
+    const password = formData.get("password");
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+    const user = users.find((u) => u.email === email && u.password === password);
+
+    if (user) {
+      localStorage.setItem("user", JSON.stringify({ name: user.name, email: user.email }));
+      alert(`Welcome back, ${user.name}!`);
+      navigate("/Homepage"); // <-- Navigate to the target route!
     } else {
-      alert(data.message || "Signup failed");
+      alert("Invalid email or password");
     }
   };
 
   return (
     <div id="main">
-      <div
-        ref={containerRef}
-        className={`container ${isActive ? 'active' : ''}`}
-        id="container"
-      >
-
+      <div ref={containerRef} className={`container ${isActive ? 'active' : ''}`} id="container">
+        {/* ... Same as before: forms and toggle panels ... */}
         {/* Sign Up Form */}
         <div className="form-container sign-up">
           <form onSubmit={handleSignUp}>
@@ -74,19 +65,9 @@ function App() {
               <a href="#" className="icon"><i className="fab fa-linkedin-in"></i></a>
             </div>
             <span>or use your email for registration</span>
-
-            <div style={{ display: "flex", alignItems: "center", marginTop: "5px" }}>
-              <input type="text" name="name" placeholder="Name" required />
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", marginTop: "5px" }}>
-              <input type="email" name="email" placeholder="Email" required />
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", marginTop: "5px" }}>
-              <input type="password" name="password" placeholder="Password" required />
-            </div>
-
+            <input type="text" name="name" placeholder="Name" required />
+            <input type="email" name="email" placeholder="Email" required />
+            <input type="password" name="password" placeholder="Password" required />
             <button type="submit">Sign Up</button>
           </form>
         </div>
@@ -102,19 +83,11 @@ function App() {
               <a href="#" className="icon"><i className="fab fa-linkedin-in"></i></a>
             </div>
             <span>or use your email and password</span>
-
-            <div style={{ display: "flex", alignItems: "center", marginTop: "5px" }}>
-              <input type="email" name="email" placeholder="Email" required />
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", marginTop: "5px" }}>
-              <input type="password" name="password" placeholder="Password" required />
-            </div>
-            
+            <input type="email" name="email" placeholder="Email" required />
+            <input type="password" name="password" placeholder="Password" required />
             <button type="submit">Sign In</button>
           </form>
         </div>
-
         {/* Toggle Panels */}
         <div className="toggle-container">
           <div className="toggle">
@@ -130,10 +103,20 @@ function App() {
             </div>
           </div>
         </div>
-
-        {/* Language Selector */}
       </div>
     </div>
+  );
+}
+
+// App Component with Routing
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<LoginSignup />} />
+        <Route path="/homepage" element={<Homepage/>} />
+      </Routes>
+    </Router>
   );
 }
 
