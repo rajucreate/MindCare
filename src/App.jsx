@@ -9,6 +9,7 @@ import VideosContent from './Videos';
 import ArticlesContent from './Articles';
 import SelfHelpGuidesContent from './SelfHelpGuides';
 import TherapistHomepage from './Components/TherapistHomepage';
+import TherapistAvailability from "./Components/TherapistAvailability";
 
 function LoginSignup() {
   const containerRef = useRef(null);
@@ -146,6 +147,7 @@ function App() {
 
         {/* Therapist Dashboard */}
         <Route path="/therapist" element={<TherapistHomepage />} />
+        <Route path="/therapist/availability" element={<TherapistAvailability />} />
 
       </Routes>
     </Router>
