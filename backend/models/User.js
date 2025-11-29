@@ -21,7 +21,12 @@ const UserSchema = new mongoose.Schema({
 
   // new fields you will use later
   availability: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  isVerified: { type: Boolean, default: false },
+  verificationToken: { type: String },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
+
 });
 
 module.exports = mongoose.model("User", UserSchema);

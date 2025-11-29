@@ -23,3 +23,4 @@ app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 app.use("/api/therapist", require("./routes/therapistRoutes"));
 app.use("/api/sessions", require("./routes/sessionRoutes"));
 app.use("/api/booking", require("./routes/bookingRoutes"));
+app.use("/auth", require("./routes/authRoutes"));
