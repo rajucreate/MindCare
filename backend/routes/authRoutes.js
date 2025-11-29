@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const crypto = require("crypto");
-const sendVerificationEmail = require("../utils/sendEmail");
+const sendEmail = require("../utils/sendEmail");
 const transporter = require("../config/nodemailer");
 
 // Signup
@@ -12,36 +12,39 @@ router.post("/signup", async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
 
-    // email domain validation
-    const allowedDomains = ["gmail.com", "yahoo.com", "outlook.com"];
-    const domain = email.split("@")[1];
-    if (!allowedDomains.includes(domain)) {
-      return res.status(400).json({ msg: "Invalid email domain" });
-    }
+    let user = await User.findOne({ email });
+    if (user)
+      return res.status(400).json({ msg: "User already exists" });
 
-    const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ msg: "Email already exists" });
-
-    const verificationToken = crypto.randomBytes(32).toString("hex");
-
-    const user = new User({
-      name,
-      email,
-      password,
-      role,
-      isVerified: false,
-      verificationToken
-    });
-
+    user = new User({ name, email, password, role });
     await user.save();
 
-    // send verification link
-    await sendVerificationEmail(email, verificationToken);
+    // Create verification token
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
 
-    res.json({ msg: "Account created! Check your email to verify." });
+    const verifyLink = `${process.env.CLIENT_URL}/verify-email/${token}`;
+
+    // Email HTML
+    const html = `
+      <h2>Verify your MindCare account</h2>
+      <p>Click the link below to verify your email:</p>
+      <a href="${verifyLink}" target="_blank">${verifyLink}</a>
+      <p>This link is valid for 24 hours.</p>
+    `;
+
+    await sendEmail(user.email, "Verify your MindCare email", html);
+
+    res.json({
+      msg: "Signup successful! Please check your email for verification link.",
+    });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ msg: "Server error", error: err.message });
   }
 });
 
@@ -83,22 +86,21 @@ router.post("/login", async (req, res) => {
 
 router.get("/verify/:token", async (req, res) => {
   try {
-    const { token } = req.params;
+    const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET);
 
-    const user = await User.findOne({ verificationToken: token });
-    if (!user) return res.status(400).send("Invalid or expired verification link");
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(404).json({ msg: "User not found" });
 
     user.isVerified = true;
-    user.verificationToken = null;
     await user.save();
 
-    // redirect user to frontend login
-    res.redirect(process.env.BASE_URL + "/?verified=success");
+    res.json({ msg: "Email verified successfully!" });
 
   } catch (err) {
-    res.status(500).send("Error verifying email");
+    res.status(400).json({ msg: "Invalid or expired token" });
   }
 });
+
 
 router.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
