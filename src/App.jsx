@@ -10,6 +10,9 @@ import ArticlesContent from './Articles';
 import SelfHelpGuidesContent from './SelfHelpGuides';
 import TherapistHomepage from './Components/TherapistHomepage';
 import TherapistAvailability from "./Components/TherapistAvailability";
+import ForgotPassword from "./Components/ForgotPassword";
+import ResetPassword from "./Components/ResetPassword";
+
 
 function LoginSignup() {
   const containerRef = useRef(null);
@@ -25,6 +28,31 @@ function LoginSignup() {
     const formData = new FormData(e.target);
     const name = formData.get("name");
     const email = formData.get("email");
+
+    // simple regex check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      alert("Invalid email format");
+      return;
+    }
+
+    // Allowed domains
+    const allowedDomains = [
+      "gmail.com",
+      "yahoo.com",
+      "outlook.com",
+      "hotmail.com",
+      "icloud.com"
+    ];
+
+    const domain = email.split("@")[1];
+
+    if (!allowedDomains.includes(domain)) {
+      alert("Email must be from a valid provider like Gmail, Yahoo, Outlook.");
+      return;
+    }
+
     const password = formData.get("password");
     const role = formData.get("role");
 
@@ -101,6 +129,13 @@ function LoginSignup() {
             <input type="password" name="password" placeholder="Password" required />
 
             <button type="submit">Sign In</button>
+            <p 
+              className="forgot-link"
+              onClick={() => navigate("/forgot-password")}
+              style={{ cursor: "pointer", marginTop: "10px" }}
+            >
+              Forgot Password?
+            </p>  
           </form>
         </div>
 
@@ -148,7 +183,8 @@ function App() {
         {/* Therapist Dashboard */}
         <Route path="/therapist" element={<TherapistHomepage />} />
         <Route path="/therapist/availability" element={<TherapistAvailability />} />
-
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
       </Routes>
     </Router>
   );
