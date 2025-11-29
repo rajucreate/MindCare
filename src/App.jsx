@@ -1,9 +1,12 @@
+import React, { useRef, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Homepage from './Homepage';
 import VideosContent from './Videos';
 import ArticlesContent from './Articles';
 import SelfHelpGuidesContent from './SelfHelpGuides';
 import TherapistHomepage from './Components/TherapistHomepage';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import './App.css'
 
 
 function LoginSignup() {
