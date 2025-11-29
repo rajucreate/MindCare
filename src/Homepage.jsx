@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import TherapistHomepage from "./Components/TherapistHomepage";
 import './homepage.css';
 
 class Homepage extends Component {
@@ -12,7 +13,8 @@ class Homepage extends Component {
       currentMood: "",
       journalEntry: "",
       searchQuery: "",
-      showProfile: false
+      showProfile: false,
+      therapists: []
     };
   }
 
@@ -21,12 +23,14 @@ class Homepage extends Component {
     if (userStr) {
       this.setState({ user: JSON.parse(userStr) });
     }
-    const darkMode = localStorage.getItem("darkMode") === "true";
-    this.setState({ darkMode });
-    if (darkMode) {
-      document.body.classList.add("dark-mode");
-    }
-  }
+
+    // NEW: Load therapists for student dashboard
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+    const therapists = users.filter(u => u.role === "therapist");
+
+    this.setState({ therapists });
+  } 
+
 
   handleTabClick = (tab) => {
     this.setState({ activeTab: tab });
@@ -84,6 +88,10 @@ class Homepage extends Component {
   render() {
     const { activeTab, user } = this.state;
 
+    if (user && user.role === "therapist") {
+      return <TherapistHomepage user={user} darkMode={this.state.darkMode} />;
+    }
+
     return (
       <div>
         <header>
@@ -122,7 +130,16 @@ class Homepage extends Component {
             </button>
             <button className="emergency">Emergency Help</button>
           </div>
-        </header>
+          <button 
+            className="logout-btn" 
+            onClick={() => {
+              localStorage.removeItem("user");
+              window.location.href = "/";
+            }}
+          >
+            <i className="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </header> 
 
         <div className="dashboard">
           <div className="stats">
@@ -394,18 +411,21 @@ class Homepage extends Component {
           <div id="therapy" className={`tab-content ${activeTab === "therapy" ? "active" : ""}`}>
             <div className="section-grid">
               <div className="subcard therapy-card">
-                <h3>Your Therapists</h3>
-                <p>
-                  <strong>Dr. Sarah Johnson</strong>
-                  <br />
-                  Cognitive Behavioral Therapy
-                </p>
-                <p>
-                  <strong>Dr. Alan Rivera</strong>
-                  <br />
-                  Mindfulness-Based Therapy
-                </p>
-                <button>View Profiles</button>
+                <div className="subcard therapy-card">
+                  <h3>Your Therapists</h3>
+                  {this.state.therapists.map((t, index) => (
+                    <div key={index} className="therapist-item">
+                      <strong>{t.name}</strong><br />
+                      <span style={{ fontSize: "13px", opacity: 0.8 }}>{t.email}</span><br />
+
+                      {/* Availability Badge */}
+                      <span className={`availability-badge ${t.availability ? "open" : "closed"}`}>
+                        {t.availability ? "🟢 Available" : "🔴 Not Available"}
+                      </span>
+                    </div>
+                  ))}
+                  <button>View Profiles</button>
+                </div>
               </div>
               <div className="subcard therapy-card">
                 <h3>Upcoming Sessions</h3>

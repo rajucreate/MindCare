@@ -692,3 +692,217 @@ body.dark-mode .search-input {
   }
 }
 
+/* ==========================================================
+   === Therapist Portal Styles (Safe Additions Only) ===
+   ========================================================== */
+
+.therapist-portal .therapist-grid {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 1rem;
+}
+
+.left-col, .right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Client List Panel */
+.client-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.client-list li {
+  padding: 0.8rem;
+  margin-bottom: 0.6rem;
+  background: var(--card-bg);
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 4px solid var(--accent);
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow);
+}
+
+.client-list li:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-hover);
+}
+
+.client-list li.selected {
+  background: rgba(102, 126, 234, 0.08);
+  border-left-color: var(--accent-secondary);
+  transform: translateX(4px);
+}
+
+/* Appointment Items */
+.appointment-item {
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.15);
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.appt-actions button {
+  margin-left: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.appt-actions button:hover {
+  transform: translateY(-2px);
+}
+
+.appt-status {
+  font-size: 0.8rem;
+  color: var(--text-light);
+}
+
+/* Notes Section */
+.notes-section textarea {
+  width: 100%;
+  background: var(--card-bg);
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  padding: 0.7rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  resize: vertical;
+  transition: border 0.3s ease;
+}
+
+.notes-section textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.notes-list {
+  list-style: none;
+  margin-top: 1rem;
+  padding: 0;
+}
+
+.notes-list li {
+  padding: 0.8rem;
+  background: #f8f9ff;
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  margin-bottom: 0.7rem;
+  transition: all 0.3s ease;
+}
+
+.notes-list li:hover {
+  transform: translateX(5px);
+  background: #eef2ff;
+}
+
+/* Availability Button */
+.availability-btn {
+  background: var(--gradient-primary);
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.3s ease;
+  box-shadow: var(--shadow);
+}
+
+.availability-btn.closed {
+  background: var(--alert-red);
+}
+
+.availability-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* Dark Mode Compatibility */
+body.dark-mode .client-list li {
+  background: #2d3748;
+  border-left-color: var(--accent);
+}
+
+body.dark-mode .client-list li.selected {
+  background: #3b4254;
+}
+
+body.dark-mode .notes-list li {
+  background: #2d3748;
+}
+
+body.dark-mode .notes-list li:hover {
+  background: #3b4254;
+}
+
+body.dark-mode .notes-section textarea {
+  background: #2d3748;
+  border-color: #4a5568;
+  color: var(--text-dark);
+}
+
+body.dark-mode .appointment-item {
+  border-color: rgba(255,255,255,0.1);
+}
+
+@media (max-width: 768px) {
+  .therapist-portal .therapist-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.therapist-item {
+  background: #f7f9ff;
+  padding: 1rem;
+  border-radius: 10px;
+  margin-bottom: 0.8rem;
+  border-left: 4px solid #667eea;
+}
+
+.availability-badge {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.availability-badge.open {
+  background: rgba(72, 187, 120, 0.2);
+  color: #2f855a;
+}
+
+.availability-badge.closed {
+  background: rgba(229, 62, 62, 0.2);
+  color: #c53030;
+}
+
+/* Dark Mode Support */
+body.dark-mode .therapist-item {
+  background: #2d3748;
+}
+
+body.dark-mode .availability-badge.open {
+  background: rgba(72, 187, 120, 0.3);
+  color: #68d391;
+}
+
+body.dark-mode .availability-badge.closed {
+  background: rgba(229, 62, 62, 0.3);
+  color: #e57373;
+}
