@@ -1,17 +1,18 @@
-import React, { useRef, useState } from 'react';
-import { useNavigate, BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import './App.css';
-import '@fortawesome/fontawesome-free/css/all.min.css';
+import React, { useRef, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
+import "./App.css";
+import "@fortawesome/fontawesome-free/css/all.min.css";
 import API from "./api";
 
-import Homepage from './Homepage';
-import VideosContent from './Videos';
-import ArticlesContent from './Articles';
-import SelfHelpGuidesContent from './SelfHelpGuides';
-import TherapistHomepage from './Components/TherapistHomepage';
+import Homepage from "./Homepage";
+import VideosContent from "./Videos";
+import ArticlesContent from "./Articles";
+import SelfHelpGuidesContent from "./SelfHelpGuides";
+import TherapistHomepage from "./Components/TherapistHomepage";
 import TherapistAvailability from "./Components/TherapistAvailability";
 import ForgotPassword from "./Components/ForgotPassword";
 import ResetPassword from "./Components/ResetPassword";
+
 
 
 function LoginSignup() {
