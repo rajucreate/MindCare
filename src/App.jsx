@@ -6,6 +6,7 @@ import VideosContent from './Videos';
 import ArticlesContent from './Articles';
 import SelfHelpGuidesContent from './SelfHelpGuides';
 import TherapistHomepage from './Components/TherapistHomepage';
+import '@fortawesome/fontawesome-free/css/all.min.css';
 import './App.css'
 
 
@@ -112,7 +113,10 @@ function LoginSignup() {
         <div className="form-container sign-in">
           <form onSubmit={handleSignIn}>
             <h1>Sign In</h1>
-
+            <div className="social-icons">
+              <i className="fab fa-google"></i>
+              <i className="fab fa-facebook" style={{ color: "#1877f2" }}></i>
+            </div>
             <span>or use your email and password</span>
 
             <input type="email" name="email" placeholder="Email" required />
