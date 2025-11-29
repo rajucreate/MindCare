@@ -3,6 +3,7 @@ import VideosContent from './Videos';
 import ArticlesContent from './Articles';
 import SelfHelpGuidesContent from './SelfHelpGuides';
 import TherapistHomepage from './Components/TherapistHomepage';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
 
 
 function LoginSignup() {
@@ -149,6 +150,7 @@ function App() {
   return (
     <Router>
       <Routes>
+        <Route path="/" element={<LoginSignup />} />
         <Route path="/homepage" element={<Homepage />} />
         <Route path="/videos" element={<VideosContent />} />
         <Route path="/articles" element={<ArticlesContent />} />
