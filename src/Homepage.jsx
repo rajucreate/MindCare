@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import TherapistHomepage from "./Components/TherapistHomepage";
+import BookingModal from "./Components/BookingModal";
 import './homepage.css';
 import API from "../api";   
 
@@ -15,7 +16,9 @@ class Homepage extends Component {
       journalEntry: "",
       searchQuery: "",
       showProfile: false,
-      therapists: []
+      therapists: [],
+      showBookingModal: false,
+      selectedTherapist: null,
     };
   }
 
@@ -86,6 +89,20 @@ class Homepage extends Component {
   navigateToGuides = () => {
     // Navigate to self-help guides page
     window.location.href = '/guides';
+  };
+
+  openBookingModal = (therapist) => {
+    this.setState({ 
+      showBookingModal: true,
+      selectedTherapist: therapist
+    });
+  };
+
+  closeBookingModal = () => {
+    this.setState({
+      showBookingModal: false,
+      selectedTherapist: null
+    });
   };
 
   render() {
@@ -426,9 +443,14 @@ class Homepage extends Component {
                       <span className={`availability-badge ${t.availability ? "open" : "closed"}`}>
                         {t.availability ? "🟢 Available" : "🔴 Not Available"}
                       </span>
+                      <button 
+                        onClick={() => this.openBookingModal(t)}
+                        style={{ marginTop: "10px" }}
+                      >
+                        <i className="fas fa-calendar-plus"></i> Book Session
+                      </button>
                     </div>
                   ))}
-                  <button>View Profiles</button>
                 </div>
               </div>
               <div className="subcard therapy-card">
@@ -489,6 +511,16 @@ class Homepage extends Component {
                 <button className="crisis-btn">Chat Now</button>
             </div>
           </div>
+
+          {this.state.showBookingModal && (
+            <BookingModal
+              therapist={this.state.selectedTherapist}
+              studentId={this.state.user?._id}
+              onClose={this.closeBookingModal}
+              onSuccess={() => alert("Session request sent!")}
+            />
+          )}
+
         </div>
       </div>
     );

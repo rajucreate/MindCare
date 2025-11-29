@@ -1,0 +1,96 @@
+.booking-modal-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(4px);
+  background: rgba(0,0,0,0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999999;
+}
+
+.booking-modal {
+  background: white;
+  padding: 2rem;
+  width: 420px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  animation: fadeIn 0.25s ease;
+}
+
+.booking-modal h2 {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.booking-modal label {
+  font-weight: 600;
+  margin-top: 0.8rem;
+  display: block;
+}
+
+.booking-modal input,
+.booking-modal select,
+.booking-modal textarea {
+  width: 100%;
+  margin-top: 0.3rem;
+  padding: 0.7rem;
+  border-radius: 8px;
+  border: 2px solid #eee;
+  outline: none;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+
+.booking-modal textarea {
+  height: 80px;
+  resize: none;
+}
+
+.booking-modal input:focus,
+.booking-modal select:focus,
+.booking-modal textarea:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 3px rgba(102,126,234,0.4);
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+}
+
+.modal-buttons button {
+  padding: 0.7rem 1.4rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.modal-buttons .cancel {
+  background: #eee;
+  color: #444;
+}
+
+.modal-buttons .cancel:hover {
+  background: #ddd;
+}
+
+.modal-buttons .book {
+  background: #667eea;
+  color: white;
+}
+
+.modal-buttons .book:hover {
+  background: #5567d6;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
