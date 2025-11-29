@@ -1,0 +1,314 @@
+/* ======================================================
+   Therapist Portal Layout
+   ====================================================== */
+
+.therapist-portal {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.therapist-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.left-col,
+.right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+
+/* ======================================================
+   Card Style (Clean + Modern)
+   ====================================================== */
+
+.card {
+    background: var(--card-bg, #ffffff);
+    padding: 1.5rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(102,126,234,0.1);
+    border: 1px solid rgba(0,0,0,0.05);
+    transition: 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(102,126,234,0.2);
+}
+
+.card h3 {
+    margin-bottom: 1rem;
+}
+
+
+/* ======================================================
+   Client List
+   ====================================================== */
+
+.client-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+.client-list li {
+    padding: 1rem;
+    border-radius: 12px;
+    background: #f7f9ff;
+    border-left: 4px solid #667eea;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    margin-bottom: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    transition: 0.25s ease;
+}
+
+.client-list li:hover {
+    transform: translateX(5px);
+    background: #eef1ff;
+}
+
+.client-list li.selected {
+    background: #e0e4ff;
+    border-left-color: #764ba2;
+}
+
+
+/* ======================================================
+   Appointments Section
+   ====================================================== */
+
+.appointment-item {
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.appt-status {
+    font-size: 0.8rem;
+    color: #666;
+}
+
+
+/* ======================================================
+   Therapist Buttons (Global Style)
+   ====================================================== */
+
+.therapist-portal button {
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    cursor: pointer;
+    transition: 0.25s ease;
+    box-shadow: 0 4px 14px rgba(102,126,234,0.3);
+}
+
+.therapist-portal button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(102,126,234,0.4);
+}
+
+.therapist-portal button:active {
+    transform: translateY(0px);
+}
+
+
+/* ======================================================
+   Appointment Action Buttons
+   ====================================================== */
+
+.appt-actions button {
+    padding: 0.5rem 0.9rem;
+    font-size: 0.8rem;
+}
+
+button.confirm {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    box-shadow: 0 4px 14px rgba(72,187,120,0.3);
+}
+
+button.reschedule {
+    background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+    box-shadow: 0 4px 14px rgba(237,137,54,0.3);
+}
+
+button.cancel {
+    background: linear-gradient(135deg, #e63946 0%, #d62839 100%);
+    box-shadow: 0 4px 14px rgba(230,57,70,0.3);
+}
+
+
+/* ======================================================
+   Notes Section
+   ====================================================== */
+
+.notes-section textarea {
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 8px;
+    border: 2px solid #e2e8f0;
+    background: #fafbff;
+    min-height: 100px;
+    font-size: 0.9rem;
+    resize: vertical;
+    transition: 0.25s;
+}
+
+.notes-section textarea:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 6px rgba(102,126,234,0.3);
+}
+
+.notes-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 1rem;
+}
+
+.notes-list li {
+    background: #f7f9ff;
+    padding: 1rem;
+    border-left: 4px solid #667eea;
+    border-radius: 10px;
+    margin-bottom: 0.8rem;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.05);
+    transition: 0.2s ease;
+}
+
+.notes-list li:hover {
+    transform: translateX(5px);
+    background: #eef1ff;
+}
+
+
+/* ======================================================
+   Availability Button
+   ====================================================== */
+
+.availability-btn {
+    font-size: 0.8rem;
+    padding: 0.5rem 1.3rem;
+    border-radius: 30px;
+    letter-spacing: 0.5px;
+}
+
+.availability-btn.closed {
+    background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+}
+
+
+/* ======================================================
+   Dark Mode Support
+   ====================================================== */
+
+body.dark-mode .card {
+    background: #2d3748;
+    border-color: rgba(255,255,255,0.1);
+    color: #e2e8f0;
+}
+
+body.dark-mode .client-list li {
+    background: #313b4f;
+    color: white;
+}
+
+body.dark-mode .client-list li:hover {
+    background: #3e4960;
+}
+
+body.dark-mode .notes-section textarea {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: white;
+}
+
+body.dark-mode .notes-list li {
+    background: #3a4458;
+}
+
+body.dark-mode .therapist-portal button {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+}
+
+body.dark-mode .therapist-portal button:hover {
+    box-shadow: 0 8px 28px rgba(0,0,0,0.8);
+}
+
+/* ======================================================
+   Button Spacing Improvements
+   ====================================================== */
+
+/* Space between buttons inside appointment actions */
+.appt-actions button {
+    margin-right: 0.5rem;
+}
+
+.appt-actions button:last-child {
+    margin-right: 0;
+}
+
+/* Space between general buttons inside cards */
+.therapist-portal .card button {
+    margin-top: 0.6rem;
+}
+
+/* Flex layout for action groups (Notes buttons, quick actions) */
+.notes-buttons,
+.quick-actions {
+    display: flex;
+    gap: 0.8rem; /* clean spacing between buttons */
+    margin-top: 0.8rem;
+}
+
+/* Availability button spacing */
+.availability-btn {
+    margin-left: 0.5rem;
+}
+
+/* For any row of buttons you may add later */
+.button-row {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 1rem;
+}
+
+/* Logout Button */
+.logout-btn {
+    background: linear-gradient(135deg, #ff6b6b 0%, #d62828 100%);
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.25s ease;
+    box-shadow: 0 4px 14px rgba(255, 107, 107, 0.3);
+}
+
+.logout-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 22px rgba(255, 107, 107, 0.45);
+}
+
+.logout-btn i {
+    margin-right: 6px;
+}
+
+body.dark-mode .logout-btn {
+    box-shadow: 0 4px 18px rgba(0,0,0,0.6);
+}
+

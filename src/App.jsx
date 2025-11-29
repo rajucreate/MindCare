@@ -1,24 +1,27 @@
-import React, { useRef, useState } from 'react';
-import { useNavigate, BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import './App.css';
-import '@fortawesome/fontawesome-free/css/all.min.css';
-import Homepage from './Homepage'; // Import your component
-import VideosContent from './Videos'; // Import Videos component
-import ArticlesContent from './Articles'; // Import Articles component
-import SelfHelpGuidesContent from './SelfHelpGuides'; // Import Self-Help Guides component
+import Homepage from './Homepage';
+import VideosContent from './Videos';
+import ArticlesContent from './Articles';
+import SelfHelpGuidesContent from './SelfHelpGuides';
+import TherapistHomepage from './Components/TherapistHomepage';
+
 
 function LoginSignup() {
   const containerRef = useRef(null);
   const [isActive, setIsActive] = useState(false);
   const navigate = useNavigate();
 
-  // Sign Up
+  /* --------------------------
+      SIGN UP (Student/Therapist)
+  -------------------------- */
   const handleSignUp = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
+
     const name = formData.get("name");
     const email = formData.get("email");
     const password = formData.get("password");
+    const role = formData.get("role");       // <-- NEW (student/therapist)
+
     const users = JSON.parse(localStorage.getItem("users")) || [];
 
     const existingUser = users.find((u) => u.email === email);
@@ -28,99 +31,129 @@ function LoginSignup() {
       return;
     }
 
-    users.push({ name, email, password });
+    // Save new user
+    users.push({ name, email, password, role });
     localStorage.setItem("users", JSON.stringify(users));
-    localStorage.setItem("user", JSON.stringify({ name, email }));
-    alert("Signup successful!");
+    localStorage.setItem("user", JSON.stringify({ name, email, role }));
+
+    alert("Signup successful! Please sign in.");
     setIsActive(false);
   };
 
-  // Sign In
+  /* --------------------------
+        SIGN IN (Detect Role)
+  -------------------------- */
   const handleSignIn = (e) => {
     e.preventDefault();
+
     const formData = new FormData(e.target);
     const email = formData.get("email");
     const password = formData.get("password");
+
     const users = JSON.parse(localStorage.getItem("users")) || [];
     const user = users.find((u) => u.email === email && u.password === password);
 
-    if (user) {
-      localStorage.setItem("user", JSON.stringify({ name: user.name, email: user.email }));
-      alert(`Welcome back, ${user.name}!`);
-      navigate("/homepage"); // <-- Navigate to the target route!
-    } else {
+    if (!user) {
       alert("Invalid email or password");
+      return;
+    }
+
+    // Save login session
+    localStorage.setItem("user", JSON.stringify({ 
+      name: user.name, 
+      email: user.email,
+      role: user.role
+    }));
+
+    alert(`Welcome back, ${user.name}!`);
+
+    // Redirect based on role
+    if (user.role === "therapist") {
+      navigate("/therapist");
+    } else {
+      navigate("/homepage");
     }
   };
 
   return (
     <div id="main">
       <div ref={containerRef} className={`container ${isActive ? 'active' : ''}`} id="container">
-        {/* ... Same as before: forms and toggle panels ... */}
-        {/* Sign Up Form */}
+
+        {/* ---------------------
+              SIGN UP FORM
+        ---------------------- */}
         <div className="form-container sign-up">
           <form onSubmit={handleSignUp}>
             <h1>Create Account</h1>
-            <div className="social-icons">
-              <a href="#" className="icon"><i className="fab fa-google-plus-g"></i></a>
-              <a href="#" className="icon"><i className="fab fa-facebook-f"></i></a>
-              <a href="#" className="icon"><i className="fab fa-github"></i></a>
-              <a href="#" className="icon"><i className="fab fa-linkedin-in"></i></a>
-            </div>
+
             <span>or use your email for registration</span>
+
             <input type="text" name="name" placeholder="Name" required />
             <input type="email" name="email" placeholder="Email" required />
             <input type="password" name="password" placeholder="Password" required />
+
+            {/* NEW: Role selection */}
+            <select name="role" required style={{ padding: "0.7rem", borderRadius: "8px", border: "1px solid #ccc" }}>
+              <option value="student">Student</option>
+              <option value="therapist">Therapist</option>
+            </select>
+
             <button type="submit">Sign Up</button>
           </form>
         </div>
 
-        {/* Sign In Form */}
+        {/* ---------------------
+             SIGN IN FORM
+        ---------------------- */}
         <div className="form-container sign-in">
           <form onSubmit={handleSignIn}>
             <h1>Sign In</h1>
-            <div className="social-icons">
-              <a href="#" className="icon"><i className="fab fa-google-plus-g"></i></a>
-              <a href="#" className="icon"><i className="fab fa-facebook-f"></i></a>
-              <a href="#" className="icon"><i className="fab fa-github"></i></a>
-              <a href="#" className="icon"><i className="fab fa-linkedin-in"></i></a>
-            </div>
+
             <span>or use your email and password</span>
+
             <input type="email" name="email" placeholder="Email" required />
             <input type="password" name="password" placeholder="Password" required />
+
             <button type="submit">Sign In</button>
           </form>
         </div>
-        {/* Toggle Panels */}
+
+        {/* ---------------------
+            TOGGLE PANELS
+        ---------------------- */}
         <div className="toggle-container">
           <div className="toggle">
             <div className="toggle-panel toggle-left">
               <h1>Welcome Back!</h1>
-              <p>Enter your personal details to use all of our site’s features</p>
+              <p>Enter your credentials to access your dashboard</p>
               <button className="hidden" onClick={() => setIsActive(false)}>Sign In</button>
             </div>
+
             <div className="toggle-panel toggle-right">
-              <h1>Hello, Friend!</h1>
-              <p>Register with your personal details to use all of our site’s features</p>
+              <h1>Hello!</h1>
+              <p>Create your account to get started</p>
               <button className="hidden" onClick={() => setIsActive(true)}>Sign Up</button>
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );
 }
 
-// App Component with Routing
+/* --------------------------
+      ROUTING SETUP
+-------------------------- */
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<LoginSignup />} />
-        <Route path="/homepage" element={<Homepage/>} />
-        <Route path="/videos" element={<VideosContent/>} />
-        <Route path="/articles" element={<ArticlesContent/>} />
-        <Route path="/guides" element={<SelfHelpGuidesContent/>} />
+        <Route path="/homepage" element={<Homepage />} />
+        <Route path="/videos" element={<VideosContent />} />
+        <Route path="/articles" element={<ArticlesContent />} />
+        <Route path="/guides" element={<SelfHelpGuidesContent />} />
+        <Route path="/therapist" element={<TherapistHomepage />} />
       </Routes>
     </Router>
   );
