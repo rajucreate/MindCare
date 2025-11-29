@@ -1,8 +1,5 @@
 import React, { Component } from "react";
-import TherapistHomepage from "./Components/TherapistHomepage";
-import BookingModal from "./Components/BookingModal";
 import './homepage.css';
-import API from "./api";
 
 class Homepage extends Component {
   constructor(props) {
@@ -15,64 +12,21 @@ class Homepage extends Component {
       currentMood: "",
       journalEntry: "",
       searchQuery: "",
-      showProfile: false,
-      therapists: [],
-      showBookingModal: false,
-      selectedTherapist: null,
-
-      // New: student sessions
-      sessions: [],
-      sessionsLoading: false,
-      actionLoadingId: null
+      showProfile: false
     };
   }
 
-  async componentDidMount() {
-    // Load logged-in user
+  componentDidMount() {
     const userStr = localStorage.getItem("user");
     if (userStr) {
-      const user = JSON.parse(userStr);
-      this.setState({ user });
+      this.setState({ user: JSON.parse(userStr) });
     }
-
-    // Load therapist list from backend
-    try {
-      const res = await API.get("/therapist/all");
-      this.setState({ therapists: res.data });
-    } catch (err) {
-      console.error("Failed to fetch therapists:", err);
-    }
-
-    // If logged in student, load sessions
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (user && user._id && user.role === "student") {
-      this.loadStudentSessions(user._id);
-    }
-
-    // Load dark mode flag
     const darkMode = localStorage.getItem("darkMode") === "true";
+    this.setState({ darkMode });
     if (darkMode) {
-      this.setState({ darkMode: true });
       document.body.classList.add("dark-mode");
     }
   }
-
-  loadStudentSessions = async (studentId) => {
-    this.setState({ sessionsLoading: true });
-    try {
-      const res = await API.get(`/sessions/student/${studentId}`);
-      // sort sessions by date/time ascending
-      const sorted = res.data.sort(
-        (a, b) => new Date(a.date + " " + a.time) - new Date(b.date + " " + b.time)
-      );
-      this.setState({ sessions: sorted });
-    } catch (err) {
-      console.error("Failed to load student sessions:", err);
-      // don't interrupt UI
-    } finally {
-      this.setState({ sessionsLoading: false });
-    }
-  };
 
   handleTabClick = (tab) => {
     this.setState({ activeTab: tab });
@@ -99,7 +53,7 @@ class Homepage extends Component {
         date: new Date().toISOString()
       };
       const updatedEntries = [newEntry, ...this.state.moodEntries].slice(0, 30);
-      this.setState({
+      this.setState({ 
         moodEntries: updatedEntries,
         currentMood: "",
         journalEntry: ""
@@ -112,169 +66,48 @@ class Homepage extends Component {
     this.setState({ searchQuery: e.target.value });
   };
 
-  navigateToVideos = () => { window.location.href = '/videos'; };
-  navigateToArticles = () => { window.location.href = '/articles'; };
-  navigateToGuides = () => { window.location.href = '/guides'; };
-
-  openBookingModal = (therapist) => {
-    this.setState({
-      showBookingModal: true,
-      selectedTherapist: therapist
-    });
+  navigateToVideos = () => {
+    // Navigate to videos page
+    window.location.href = '/videos';
   };
 
-  closeBookingModal = () => {
-    this.setState({
-      showBookingModal: false,
-      selectedTherapist: null
-    });
+  navigateToArticles = () => {
+    // Navigate to articles page
+    window.location.href = '/articles';
   };
 
-  // ---------- NEW: session actions ----------
-  updateSessionStatus = async (sessionId, status) => {
-    if (!sessionId) return;
-    if (!window.confirm(`Are you sure you want to ${status} this session?`)) return;
-
-    this.setState({ actionLoadingId: sessionId });
-    try {
-      await API.post("/sessions/update-status", { sessionId, status });
-      // Update local session list
-      this.setState(prev => ({
-        sessions: prev.sessions.map(s => s._id === sessionId ? { ...s, status } : s),
-        actionLoadingId: null
-      }));
-      // Optionally show message
-      if (status === "cancelled") alert("Session cancelled.");
-      else if (status === "accepted") alert("Reschedule accepted / session confirmed.");
-      else if (status === "completed") alert("Session marked completed.");
-    } catch (err) {
-      console.error("Failed to update session status:", err);
-      alert("Failed to update session status.");
-      this.setState({ actionLoadingId: null });
-    }
+  navigateToGuides = () => {
+    // Navigate to self-help guides page
+    window.location.href = '/guides';
   };
 
-  // Student accepts a reschedule suggested by therapist
-  acceptReschedule = async (sessionId) => {
-    await this.updateSessionStatus(sessionId, "accepted");
+  navigateToJoinDiscussion = () => {
+    // Navigate to join discussion page
+    window.location.href = '/join-discussion';
   };
 
-  // Student cancels a session
-  cancelSession = async (sessionId) => {
-    await this.updateSessionStatus(sessionId, "cancelled");
+  navigateToStartDiscussion = () => {
+    // Navigate to start discussion page
+    window.location.href = '/start-discussion';
   };
 
-  // Student "join" action (placeholder — replace with meeting URL logic)
-  joinSession = (session) => {
-    // If you later store a meetingUrl in session object use that here:
-    if (session.meetingUrl) {
-      window.open(session.meetingUrl, "_blank");
-      return;
-    }
-    // Placeholder behavior:
-    alert(`Joining session on ${session.date} at ${session.time} (placeholder).`);
+  navigateToBookSession = () => {
+    // Navigate to book session page
+    window.location.href = '/book-session';
   };
 
-  renderSessionsSection() {
-    const { sessions, sessionsLoading, actionLoadingId } = this.state;
+  navigateToTherapyTab = () => {
+    // Switch to therapy tab
+    this.handleTabClick('therapy');
+  };
 
-    // Partition sessions
-    const pending = sessions.filter(s => s.status === "pending");
-    const accepted = sessions.filter(s => s.status === "accepted");
-    const rescheduleReq = sessions.filter(s => s.status === "reschedule_requested");
-    const cancelled = sessions.filter(s => s.status === "cancelled");
-    const history = sessions.filter(s => s.status === "completed" || s.status === "rejected");
-
-    return (
-      <div className="section-grid">
-        {/* Pending */}
-        <div className="subcard">
-          <h3>Pending Requests</h3>
-          {sessionsLoading ? <p>Loading...</p> : (
-            pending.length === 0 ? <p className="coming-soon">No pending session requests.</p> : (
-              pending.map(s => (
-                <div key={s._id} className="session-row">
-                  <div>
-                    <strong>{s.therapistId?.name || "Therapist"}</strong>
-                    <div style={{ fontSize: "13px", color: "var(--text-light)" }}>{s.date} · {s.time}</div>
-                    <div style={{ fontSize: "13px", color: "var(--text-light)" }}>{s.therapistId?.email}</div>
-                    {s.reason && <div style={{ marginTop: "6px", fontStyle: "italic" }}>“{s.reason}”</div>}
-                  </div>
-                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                    <button className="btn small" onClick={() => this.joinSession(s)} disabled>Join</button>
-                    <button className="btn warn" onClick={() => this.cancelSession(s._id)} disabled={actionLoadingId === s._id}>{actionLoadingId === s._id ? "..." : "Cancel"}</button>
-                  </div>
-                </div>
-              ))
-            )
-          )}
-        </div>
-
-        {/* Upcoming */}
-        <div className="subcard">
-          <h3>Upcoming Sessions</h3>
-          {accepted.length === 0 ? <p className="coming-soon">No upcoming sessions.</p> : (
-            accepted.map(s => (
-              <div key={s._id} className="session-row">
-                <div>
-                  <strong>{s.therapistId?.name}</strong>
-                  <div style={{ fontSize: "13px", color: "var(--text-light)" }}>{s.date} · {s.time}</div>
-                  <div style={{ fontSize: "13px", color: "var(--text-light)" }}>{s.therapistId?.email}</div>
-                </div>
-                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                  <button className="btn" onClick={() => this.joinSession(s)}>Join</button>
-                  <button className="btn warn" onClick={() => this.cancelSession(s._id)} disabled={actionLoadingId === s._id}>{actionLoadingId === s._id ? "..." : "Cancel"}</button>
-                </div>
-              </div>
-            ))
-          )}
-
-          {/* Reschedule requests */}
-          {rescheduleReq.length > 0 && (
-            <>
-              <h4 style={{ marginTop: "12px" }}>Reschedule Suggestions</h4>
-              {rescheduleReq.map(s => (
-                <div key={s._id} className="session-row">
-                  <div>
-                    <strong>{s.therapistId?.name}</strong>
-                    <div style={{ fontSize: "13px", color: "var(--text-light)" }}>{s.date} · {s.time}</div>
-                    <div style={{ fontSize: "13px", color: "var(--text-light)" }}>{s.therapistId?.email}</div>
-                    {s.therapistNote && <div style={{ marginTop: "6px", fontStyle: "italic" }}>Note: {s.therapistNote}</div>}
-                  </div>
-                  <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                    <button className="btn" onClick={() => this.acceptReschedule(s._id)} disabled={actionLoadingId === s._id}>{actionLoadingId === s._id ? "..." : "Accept"}</button>
-                    <button className="btn reject" onClick={() => this.cancelSession(s._id)} disabled={actionLoadingId === s._id}>Decline</button>
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
-        </div>
-
-        {/* History */}
-        <div className="subcard" style={{ marginTop: "1rem" }}>
-          <h3>Session History</h3>
-          {history.length === 0 ? <p className="coming-soon">No session history yet.</p> : history.map(s => (
-            <div key={s._id} className="session-row">
-              <div>
-                <strong>{s.therapistId?.name}</strong>
-                <div style={{ fontSize: "13px", color: "var(--text-light)" }}>{s.date} · {s.time}</div>
-                <div style={{ fontSize: "13px", color: "var(--text-light)" }}>{s.therapistId?.email}</div>
-                <div style={{ marginTop: "6px", fontSize: "13px", color: "var(--text-light)" }}>Status: {s.status}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  navigateToResourcesTab = () => {
+    // Switch to resources tab
+    this.handleTabClick('resources');
+  };
 
   render() {
     const { activeTab, user } = this.state;
-
-    if (user && user.role === "therapist") {
-      return <TherapistHomepage user={user} darkMode={this.state.darkMode} />;
-    }
 
     return (
       <div>
@@ -294,40 +127,26 @@ class Homepage extends Component {
               )}
             </div>
           </div>
-
           <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
             <div className="search-container">
               <i className="fas fa-search" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", opacity: 0.6 }}></i>
-              <input
-                type="text"
-                placeholder="Search resources, forums..."
+              <input 
+                type="text" 
+                placeholder="Search resources, forums..." 
                 value={this.state.searchQuery}
                 onChange={this.handleSearch}
                 className="search-input"
               />
             </div>
-
-            <button
-              className="dark-mode-toggle"
+            <button 
+              className="dark-mode-toggle" 
               onClick={this.toggleDarkMode}
               title={this.state.darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
               <i className={this.state.darkMode ? "fas fa-sun" : "fas fa-moon"}></i>
             </button>
-
             <button className="emergency">Emergency Help</button>
           </div>
-
-          <button
-            className="logout-btn"
-            onClick={() => {
-              localStorage.removeItem("token");
-              localStorage.removeItem("user");
-              window.location.href = "/";
-            }}
-          >
-            <i className="fas fa-sign-out-alt"></i> Logout
-          </button>
         </header>
 
         <div className="dashboard">
@@ -351,30 +170,51 @@ class Homepage extends Component {
           </div>
 
           <div className="tabs">
-            <div className={`tab ${activeTab === "overview" ? "active" : ""}`} onClick={() => this.handleTabClick("overview")}>
+            <div
+              className={`tab ${activeTab === "overview" ? "active" : ""}`}
+              data-tab="overview"
+              onClick={() => this.handleTabClick("overview")}
+            >
               <i className="fas fa-home"></i> Overview
             </div>
-            <div className={`tab ${activeTab === "my-sessions" ? "active" : ""}`} onClick={() => this.handleTabClick("my-sessions")}>
-              <i className="fas fa-calendar-alt"></i> My Sessions
-            </div>
-            <div className={`tab ${activeTab === "mood" ? "active" : ""}`} onClick={() => this.handleTabClick("mood")}>
+            <div
+              className={`tab ${activeTab === "mood" ? "active" : ""}`}
+              data-tab="mood"
+              onClick={() => this.handleTabClick("mood")}
+            >
               <i className="fas fa-smile"></i> Mood Tracker
             </div>
-            <div className={`tab ${activeTab === "resources" ? "active" : ""}`} onClick={() => this.handleTabClick("resources")}>
+            <div
+              className={`tab ${activeTab === "resources" ? "active" : ""}`}
+              data-tab="resources"
+              onClick={() => this.handleTabClick("resources")}
+            >
               <i className="fas fa-book"></i> Resources
             </div>
-            <div className={`tab ${activeTab === "therapy" ? "active" : ""}`} onClick={() => this.handleTabClick("therapy")}>
+            <div
+              className={`tab ${activeTab === "therapy" ? "active" : ""}`}
+              data-tab="therapy"
+              onClick={() => this.handleTabClick("therapy")}
+            >
               <i className="fas fa-user-md"></i> Therapy
             </div>
-            <div className={`tab ${activeTab === "forums" ? "active" : ""}`} onClick={() => this.handleTabClick("forums")}>
+            <div
+              className={`tab ${activeTab === "forums" ? "active" : ""}`}
+              data-tab="forums"
+              onClick={() => this.handleTabClick("forums")}
+            >
               <i className="fas fa-comments"></i> Forums
             </div>
-            <div className={`tab ${activeTab === "support" ? "active" : ""}`} onClick={() => this.handleTabClick("support")}>
+            <div
+              className={`tab ${activeTab === "support" ? "active" : ""}`}
+              data-tab="support"
+              onClick={() => this.handleTabClick("support")}
+            >
               <i className="fas fa-life-ring"></i> Support
             </div>
           </div>
 
-          {/* Overview */}
+          {/* Overview Tab */}
           <div id="overview" className={`tab-content ${activeTab === "overview" ? "active" : ""}`}>
             <div className="section-grid">
               <div className="subcard">
@@ -394,7 +234,7 @@ class Homepage extends Component {
                   <br />
                   <em>Friday · 4:00 PM</em>
                 </p>
-                <button>View All Sessions</button>
+                <button onClick={this.navigateToTherapyTab}>View All Sessions</button>
               </div>
               <div className="subcard">
                 <h3><i className="fas fa-star"></i> Recommended for You</h3>
@@ -409,7 +249,7 @@ class Homepage extends Component {
                   <br />
                   Evidence-based strategies · <em>Article</em>
                 </p>
-                <button>Browse All Resources</button>
+                <button onClick={this.navigateToResourcesTab}>Browse All Resources</button>
               </div>
               <div className="subcard progress-card">
                 <h3><i className="fas fa-chart-line"></i> Your Progress</h3>
@@ -432,7 +272,6 @@ class Homepage extends Component {
                 <button>View Detailed Stats</button>
               </div>
             </div>
-
             <div className="subcard" style={{ marginTop: "1rem" }}>
               <h3><i className="fas fa-comments"></i> Recent Forum Activity</h3>
               <p>
@@ -450,16 +289,11 @@ class Homepage extends Component {
                 <br />
                 <em>5 hours ago</em>
               </p>
-              <button>Join Discussions</button>
+              <button onClick={this.navigateToJoinDiscussion}>Join Discussions</button>
             </div>
           </div>
 
-          {/* My Sessions - NEW */}
-          <div id="my-sessions" className={`tab-content ${activeTab === "my-sessions" ? "active" : ""}`}>
-            {this.renderSessionsSection()}
-          </div>
-
-          {/* Mood Tracker */}
+          {/* Mood Tracker Tab */}
           <div id="mood" className={`tab-content ${activeTab === "mood" ? "active" : ""}`}>
             <div className="section-grid">
               <div className="subcard mood-tracker-card">
@@ -494,7 +328,6 @@ class Homepage extends Component {
                   </button>
                 </form>
               </div>
-
               <div className="subcard mood-history-card">
                 <h3><i className="fas fa-history"></i> Recent Entries</h3>
                 {this.state.moodEntries.length === 0 ? (
@@ -525,7 +358,7 @@ class Homepage extends Component {
             </div>
           </div>
 
-          {/* Resources */}
+          {/* Resources Tab */}
           <div id="resources" className={`tab-content ${activeTab === "resources" ? "active" : ""}`}>
             <div className="section-grid">
               <div className="subcard">
@@ -582,84 +415,81 @@ class Homepage extends Component {
             </div>
           </div>
 
-          {/* Therapy */}
+          {/* Therapy Tab */}
           <div id="therapy" className={`tab-content ${activeTab === "therapy" ? "active" : ""}`}>
             <div className="section-grid">
               <div className="subcard therapy-card">
                 <h3>Your Therapists</h3>
-
-                {this.state.therapists.map((t, i) => (
-                  <div key={i} className="therapist-item">
-                    <strong>{t.name}</strong>
-                    <br />
-                    <span style={{ opacity: 0.8, fontSize: "13px" }}>{t.email}</span>
-                    <br />
-
-                    {/* Availability Badge */}
-                    <span
-                      className={`availability-badge ${t.availability ? "open" : "closed"}`}
-                    >
-                      {t.availability ? "🟢 Available" : "🔴 Not Available"}
-                    </span>
-
-                    {/* Book Session Button */}
-                    <button className="book-session-btn" onClick={() => this.openBookingModal(t)}>
-                      <i className="fas fa-calendar-plus"></i> Book Session
-                    </button>
-                  </div>
-                ))}
+                <p>
+                  <strong>Dr. Sarah Johnson</strong>
+                  <br />
+                  Cognitive Behavioral Therapy
+                </p>
+                <p>
+                  <strong>Dr. Alan Rivera</strong>
+                  <br />
+                  Mindfulness-Based Therapy
+                </p>
+                <button>View Profiles</button>
               </div>
-
               <div className="subcard therapy-card">
                 <h3>Upcoming Sessions</h3>
-                <p><strong>Tomorrow</strong> — 2:00 PM<br/>Session with Dr. Sarah Johnson</p>
-                <p><strong>Friday</strong> — 4:00 PM<br/>Group Therapy: Anxiety Support</p>
+                <p>
+                  <strong>Tomorrow</strong> — 2:00 PM<br />
+                  Session with Dr. Sarah Johnson
+                </p>
+                <p>
+                  <strong>Friday</strong> — 4:00 PM<br />
+                  Group Therapy: Anxiety Support
+                </p>
+                <button onClick={this.navigateToBookSession}>Book New Session</button>
               </div>
             </div>
           </div>
 
-          {/* Forums */}
+          {/* Forums Tab */}
           <div id="forums" className={`tab-content ${activeTab === "forums" ? "active" : ""}`}>
             <div className="section-grid">
               <div className="subcard forum-card">
                 <h3>Popular Discussions</h3>
-                <p><strong>Dealing with Exam Stress</strong><br/>42 replies · Active 1h ago</p>
-                <p><strong>Balancing Studies & Social Life</strong><br/>18 replies · Active 3h ago</p>
-                <button>Join Discussion</button>
+                <p>
+                  <strong>Dealing with Exam Stress</strong>
+                  <br />
+                  42 replies · Active 1h ago
+                </p>
+                <p>
+                  <strong>Balancing Studies & Social Life</strong>
+                  <br />
+                  18 replies · Active 3h ago
+                </p>
+                <button onClick={this.navigateToJoinDiscussion}>Join Discussion</button>
               </div>
               <div className="subcard forum-card">
                 <h3>Recent Activity</h3>
-                <p><strong>Mindfulness & Meditation</strong><br/>8 new replies · 2h ago</p>
-                <p><strong>Sleep & Routine</strong><br/>5 new replies · 5h ago</p>
-                <button>Start New Discussion</button>
+                <p>
+                  <strong>Mindfulness & Meditation</strong>
+                  <br />
+                  8 new replies · 2h ago
+                </p>
+                <p>
+                  <strong>Sleep & Routine</strong>
+                  <br />
+                  5 new replies · 5h ago
+                </p>
+                <button onClick={this.navigateToStartDiscussion}>Start New Discussion</button>
               </div>
             </div>
           </div>
 
-          {/* Support */}
+          {/* Support Tab */}
           <div id="support" className={`tab-content ${activeTab === "support" ? "active" : ""}`}>
-            <div className="crisis-card">
-              <h2>Need Help Now?</h2>
-              <p>You are not alone. If you or someone you know is in crisis, call or chat with 988 for immediate help.</p>
-              <button className="crisis-btn pulse">Call 988</button>
-              <button className="crisis-btn">Chat Now</button>
+              <div className="crisis-card">
+                <h2>Need Help Now?</h2>
+                <p>You are not alone. If you or someone you know is in crisis, call or chat with 988 for immediate help.</p>
+                <button className="crisis-btn pulse">Call 988</button>
+                <button className="crisis-btn">Chat Now</button>
             </div>
           </div>
-
-          {this.state.showBookingModal && (
-            <BookingModal
-              therapist={this.state.selectedTherapist}
-              studentId={this.state.user?._id}
-              onClose={this.closeBookingModal}
-              onSuccess={() => {
-                // reload sessions when a new booking is created
-                const user = JSON.parse(localStorage.getItem("user"));
-                if (user && user._id) this.loadStudentSessions(user._id);
-                alert("Session request sent!");
-              }}
-            />
-          )}
-
         </div>
       </div>
     );

@@ -4,10 +4,11 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const crypto = require("crypto");
-const sendEmail = require("../utils/sendEmail");
 const transporter = require("../config/nodemailer");
 
-// Signup
+/* ============================================
+   SIGNUP (NO EMAIL VERIFICATION)
+============================================ */
 router.post("/signup", async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
@@ -16,31 +17,19 @@ router.post("/signup", async (req, res) => {
     if (user)
       return res.status(400).json({ msg: "User already exists" });
 
-    user = new User({ name, email, password, role });
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      isVerified: true    // 👈 always verified
+    });
+
     await user.save();
 
-    // Create verification token
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
-
-    const verifyLink = `${process.env.CLIENT_URL}/verify-email/${token}`;
-
-    // Email HTML
-    const html = `
-      <h2>Verify your MindCare account</h2>
-      <p>Click the link below to verify your email:</p>
-      <a href="${verifyLink}" target="_blank">${verifyLink}</a>
-      <p>This link is valid for 24 hours.</p>
-    `;
-
-    await sendEmail(user.email, "Verify your MindCare email", html);
-
-    res.json({
-      msg: "Signup successful! Please check your email for verification link.",
-    });
+    res.json({ msg: "Signup successful! You can now log in." });
 
   } catch (err) {
     console.error(err);
@@ -48,20 +37,19 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// Login
+
+/* ============================================
+   LOGIN (NO VERIFICATION REQUIRED)
+============================================ */
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ msg: "Invalid credentials" });
-    
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ msg: "Invalid credentials" });
+    if (!user) return res.status(400).json({ msg: "Invalid email or password" });
 
-    if (!user.isVerified) {
-      return res.status(401).json({ msg: "Please verify your email first" });
-    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ msg: "Invalid email or password" });
 
     const token = jwt.sign(
       { id: user._id, role: user.role },
@@ -72,6 +60,7 @@ router.post("/login", async (req, res) => {
     res.json({
       token,
       user: {
+        id: user._id,
         name: user.name,
         email: user.email,
         role: user.role,
@@ -84,24 +73,10 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.get("/verify/:token", async (req, res) => {
-  try {
-    const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET);
 
-    const user = await User.findById(decoded.id);
-    if (!user) return res.status(404).json({ msg: "User not found" });
-
-    user.isVerified = true;
-    await user.save();
-
-    res.json({ msg: "Email verified successfully!" });
-
-  } catch (err) {
-    res.status(400).json({ msg: "Invalid or expired token" });
-  }
-});
-
-
+/* ============================================
+   FORGOT PASSWORD → send reset link
+============================================ */
 router.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
 
@@ -111,10 +86,10 @@ router.post("/forgot-password", async (req, res) => {
   const token = crypto.randomBytes(32).toString("hex");
 
   user.resetPasswordToken = token;
-  user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 min
+  user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 minutes
   await user.save();
 
-  const resetURL = `http://localhost:3000/reset-password/${token}`;
+  const resetURL = `${process.env.CLIENT_URL}/reset-password/${token}`;
 
   await transporter.sendMail({
     to: email,
@@ -130,25 +105,31 @@ router.post("/forgot-password", async (req, res) => {
   res.json({ msg: "Reset link sent to email" });
 });
 
+
+/* ============================================
+   RESET PASSWORD (final step)
+============================================ */
 router.post("/reset-password/:token", async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
 
   const user = await User.findOne({
     resetPasswordToken: token,
-    resetPasswordExpires: { $gt: Date.now() }
+    resetPasswordExpires: { $gt: Date.now() },
   });
 
-  if (!user) return res.status(400).json({ msg: "Invalid or expired token" });
+  if (!user) return res.status(400).json({ msg: "Invalid or expired reset token" });
 
-  user.password = password;
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  user.password = hashedPassword;
   user.resetPasswordToken = undefined;
   user.resetPasswordExpires = undefined;
+
   await user.save();
 
   res.json({ msg: "Password reset successful" });
 });
-
 
 
 module.exports = router;
