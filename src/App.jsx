@@ -44,7 +44,7 @@ function LoginSignup() {
     if (user) {
       localStorage.setItem("user", JSON.stringify({ name: user.name, email: user.email }));
       alert(`Welcome back, ${user.name}!`);
-      navigate("/Homepage"); // <-- Navigate to the target route!
+      navigate("/homepage"); // <-- Navigate to the target route!
     } else {
       alert("Invalid email or password");
     }

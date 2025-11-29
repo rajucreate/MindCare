@@ -6,7 +6,13 @@ class Homepage extends Component {
     super(props);
     this.state = {
       activeTab: "overview",
-      user: null
+      user: null,
+      darkMode: false,
+      moodEntries: JSON.parse(localStorage.getItem("moodEntries")) || [],
+      currentMood: "",
+      journalEntry: "",
+      searchQuery: "",
+      showProfile: false
     };
   }
 
@@ -15,10 +21,49 @@ class Homepage extends Component {
     if (userStr) {
       this.setState({ user: JSON.parse(userStr) });
     }
+    const darkMode = localStorage.getItem("darkMode") === "true";
+    this.setState({ darkMode });
+    if (darkMode) {
+      document.body.classList.add("dark-mode");
+    }
   }
 
   handleTabClick = (tab) => {
     this.setState({ activeTab: tab });
+  };
+
+  toggleDarkMode = () => {
+    const newDarkMode = !this.state.darkMode;
+    this.setState({ darkMode: newDarkMode });
+    localStorage.setItem("darkMode", newDarkMode);
+    if (newDarkMode) {
+      document.body.classList.add("dark-mode");
+    } else {
+      document.body.classList.remove("dark-mode");
+    }
+  };
+
+  handleMoodSubmit = (e) => {
+    e.preventDefault();
+    if (this.state.currentMood && this.state.journalEntry) {
+      const newEntry = {
+        id: Date.now(),
+        mood: this.state.currentMood,
+        journal: this.state.journalEntry,
+        date: new Date().toISOString()
+      };
+      const updatedEntries = [newEntry, ...this.state.moodEntries].slice(0, 30);
+      this.setState({ 
+        moodEntries: updatedEntries,
+        currentMood: "",
+        journalEntry: ""
+      });
+      localStorage.setItem("moodEntries", JSON.stringify(updatedEntries));
+    }
+  };
+
+  handleSearch = (e) => {
+    this.setState({ searchQuery: e.target.value });
   };
 
   render() {
@@ -35,14 +80,33 @@ class Homepage extends Component {
               {user ? (
                 <>
                   Welcome back, {user.name} <br />
-                  <span style={{ fontSize: "13px", fontWeight: "normal" }}>{user.email}</span>
+                  <span style={{ fontSize: "13px", fontWeight: "normal", opacity: 0.9 }}>{user.email}</span>
                 </>
               ) : (
                 "Welcome back"
               )}
             </div>
           </div>
-          <button className="emergency">Emergency Help</button>
+          <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+            <div className="search-container">
+              <i className="fas fa-search" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", opacity: 0.6 }}></i>
+              <input 
+                type="text" 
+                placeholder="Search resources, forums..." 
+                value={this.state.searchQuery}
+                onChange={this.handleSearch}
+                className="search-input"
+              />
+            </div>
+            <button 
+              className="dark-mode-toggle" 
+              onClick={this.toggleDarkMode}
+              title={this.state.darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              <i className={this.state.darkMode ? "fas fa-sun" : "fas fa-moon"}></i>
+            </button>
+            <button className="emergency">Emergency Help</button>
+          </div>
         </header>
 
         <div className="dashboard">
@@ -71,35 +135,42 @@ class Homepage extends Component {
               data-tab="overview"
               onClick={() => this.handleTabClick("overview")}
             >
-              Overview
+              <i className="fas fa-home"></i> Overview
+            </div>
+            <div
+              className={`tab ${activeTab === "mood" ? "active" : ""}`}
+              data-tab="mood"
+              onClick={() => this.handleTabClick("mood")}
+            >
+              <i className="fas fa-smile"></i> Mood Tracker
             </div>
             <div
               className={`tab ${activeTab === "resources" ? "active" : ""}`}
               data-tab="resources"
               onClick={() => this.handleTabClick("resources")}
             >
-              Resources
+              <i className="fas fa-book"></i> Resources
             </div>
             <div
               className={`tab ${activeTab === "therapy" ? "active" : ""}`}
               data-tab="therapy"
               onClick={() => this.handleTabClick("therapy")}
             >
-              Therapy
+              <i className="fas fa-user-md"></i> Therapy
             </div>
             <div
               className={`tab ${activeTab === "forums" ? "active" : ""}`}
               data-tab="forums"
               onClick={() => this.handleTabClick("forums")}
             >
-              Forums
+              <i className="fas fa-comments"></i> Forums
             </div>
             <div
               className={`tab ${activeTab === "support" ? "active" : ""}`}
               data-tab="support"
               onClick={() => this.handleTabClick("support")}
             >
-              Support
+              <i className="fas fa-life-ring"></i> Support
             </div>
           </div>
 
@@ -107,7 +178,7 @@ class Homepage extends Component {
           <div id="overview" className={`tab-content ${activeTab === "overview" ? "active" : ""}`}>
             <div className="section-grid">
               <div className="subcard">
-                <h3>Upcoming Sessions</h3>
+                <h3><i className="fas fa-calendar-check"></i> Upcoming Sessions</h3>
                 <p>
                   <strong>Dr. Sarah Johnson</strong>
                   <br />
@@ -126,7 +197,7 @@ class Homepage extends Component {
                 <button>View All Sessions</button>
               </div>
               <div className="subcard">
-                <h3>Recommended for You</h3>
+                <h3><i className="fas fa-star"></i> Recommended for You</h3>
                 <p>
                   <strong>Managing Test Anxiety</strong>
                   <br />
@@ -140,13 +211,33 @@ class Homepage extends Component {
                 </p>
                 <button>Browse All Resources</button>
               </div>
+              <div className="subcard progress-card">
+                <h3><i className="fas fa-chart-line"></i> Your Progress</h3>
+                <div className="progress-stats">
+                  <div className="progress-item">
+                    <span>Weekly Streak</span>
+                    <div className="progress-bar">
+                      <div className="progress-fill" style={{ width: "75%" }}></div>
+                    </div>
+                    <span className="progress-value">5/7 days</span>
+                  </div>
+                  <div className="progress-item">
+                    <span>Mood Average</span>
+                    <div className="progress-bar">
+                      <div className="progress-fill" style={{ width: "68%", background: "linear-gradient(135deg, #48bb78 0%, #38a169 100%)" }}></div>
+                    </div>
+                    <span className="progress-value">4.1/5</span>
+                  </div>
+                </div>
+                <button>View Detailed Stats</button>
+              </div>
             </div>
             <div className="subcard" style={{ marginTop: "1rem" }}>
-              <h3>Recent Forum Activity</h3>
+              <h3><i className="fas fa-comments"></i> Recent Forum Activity</h3>
               <p>
                 <strong>Study Stress Support Group</strong>
                 <br />
-                “Tips for managing finals week stress” — 12 new replies
+                "Tips for managing finals week stress" — 12 new replies
                 <br />
                 <em>2 hours ago</em>
               </p>
@@ -154,11 +245,76 @@ class Homepage extends Component {
               <p>
                 <strong>Mindfulness & Meditation</strong>
                 <br />
-                “Daily meditation challenge – Week 3” — 8 new replies
+                "Daily meditation challenge – Week 3" — 8 new replies
                 <br />
                 <em>5 hours ago</em>
               </p>
               <button>Join Discussions</button>
+            </div>
+          </div>
+
+          {/* Mood Tracker Tab */}
+          <div id="mood" className={`tab-content ${activeTab === "mood" ? "active" : ""}`}>
+            <div className="section-grid">
+              <div className="subcard mood-tracker-card">
+                <h3><i className="fas fa-smile"></i> Track Your Mood</h3>
+                <form onSubmit={this.handleMoodSubmit}>
+                  <div className="mood-selector">
+                    <label>How are you feeling today?</label>
+                    <div className="mood-options">
+                      {["😢", "😕", "😐", "🙂", "😄"].map((emoji, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          className={`mood-btn ${this.state.currentMood === emoji ? "active" : ""}`}
+                          onClick={() => this.setState({ currentMood: emoji })}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="journal-input">
+                    <label>Journal Entry (optional)</label>
+                    <textarea
+                      placeholder="How was your day? What are you grateful for?"
+                      value={this.state.journalEntry}
+                      onChange={(e) => this.setState({ journalEntry: e.target.value })}
+                      rows="4"
+                    ></textarea>
+                  </div>
+                  <button type="submit" disabled={!this.state.currentMood}>
+                    Save Entry
+                  </button>
+                </form>
+              </div>
+              <div className="subcard mood-history-card">
+                <h3><i className="fas fa-history"></i> Recent Entries</h3>
+                {this.state.moodEntries.length === 0 ? (
+                  <p style={{ color: "var(--text-light)", textAlign: "center", padding: "2rem" }}>
+                    No entries yet. Start tracking your mood!
+                  </p>
+                ) : (
+                  <div className="mood-entries">
+                    {this.state.moodEntries.slice(0, 5).map((entry) => (
+                      <div key={entry.id} className="mood-entry">
+                        <div className="mood-entry-header">
+                          <span className="mood-emoji">{entry.mood}</span>
+                          <span className="mood-date">
+                            {new Date(entry.date).toLocaleDateString()}
+                          </span>
+                        </div>
+                        {entry.journal && (
+                          <p className="mood-journal">{entry.journal}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {this.state.moodEntries.length > 5 && (
+                  <button>View All Entries</button>
+                )}
+              </div>
             </div>
           </div>
 
