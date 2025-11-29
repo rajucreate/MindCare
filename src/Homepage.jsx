@@ -66,6 +66,21 @@ class Homepage extends Component {
     this.setState({ searchQuery: e.target.value });
   };
 
+  navigateToVideos = () => {
+    // Navigate to videos page
+    window.location.href = '/videos';
+  };
+
+  navigateToArticles = () => {
+    // Navigate to articles page
+    window.location.href = '/articles';
+  };
+
+  navigateToGuides = () => {
+    // Navigate to self-help guides page
+    window.location.href = '/guides';
+  };
+
   render() {
     const { activeTab, user } = this.state;
 
@@ -322,7 +337,7 @@ class Homepage extends Component {
           <div id="resources" className={`tab-content ${activeTab === "resources" ? "active" : ""}`}>
             <div className="section-grid">
               <div className="subcard">
-                <h3>Videos</h3>
+                <h3><i className="fas fa-video"></i> Videos</h3>
                 <p>Guided meditations and educational content</p>
                 <p>
                   <strong>Breathing Exercises</strong>
@@ -334,10 +349,12 @@ class Homepage extends Component {
                   <br />
                   15 minutes
                 </p>
-                <button>View All Videos</button>
+                <button onClick={this.navigateToVideos}>
+                  <i className="fas fa-play-circle"></i> View All Videos
+                </button>
               </div>
               <div className="subcard">
-                <h3>Articles</h3>
+                <h3><i className="fas fa-newspaper"></i> Articles</h3>
                 <p>Research-backed mental health information</p>
                 <p>
                   <strong>Understanding Anxiety</strong>
@@ -349,10 +366,12 @@ class Homepage extends Component {
                   <br />
                   8 min read
                 </p>
-                <button>View All Articles</button>
+                <button onClick={this.navigateToArticles}>
+                  <i className="fas fa-book-reader"></i> View All Articles
+                </button>
               </div>
               <div className="subcard">
-                <h3>Self-Help Guides</h3>
+                <h3><i className="fas fa-book-open"></i> Self-Help Guides</h3>
                 <p>Step-by-step wellness strategies</p>
                 <p>
                   <strong>Stress Management Toolkit</strong>
@@ -364,7 +383,9 @@ class Homepage extends Component {
                   <br />
                   8 pages
                 </p>
-                <button>View All Guides</button>
+                <button onClick={this.navigateToGuides}>
+                  <i className="fas fa-download"></i> View All Guides
+                </button>
               </div>
             </div>
           </div>

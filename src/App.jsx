@@ -3,6 +3,9 @@ import { useNavigate, BrowserRouter as Router, Routes, Route } from 'react-route
 import './App.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Homepage from './Homepage'; // Import your component
+import VideosContent from './Videos'; // Import Videos component
+import ArticlesContent from './Articles'; // Import Articles component
+import SelfHelpGuidesContent from './SelfHelpGuides'; // Import Self-Help Guides component
 
 function LoginSignup() {
   const containerRef = useRef(null);
@@ -115,6 +118,9 @@ function App() {
       <Routes>
         <Route path="/" element={<LoginSignup />} />
         <Route path="/homepage" element={<Homepage/>} />
+        <Route path="/videos" element={<VideosContent/>} />
+        <Route path="/articles" element={<ArticlesContent/>} />
+        <Route path="/guides" element={<SelfHelpGuidesContent/>} />
       </Routes>
     </Router>
   );
