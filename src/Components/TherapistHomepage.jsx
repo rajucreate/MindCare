@@ -74,25 +74,26 @@ class TherapistHomepage extends Component {
     });
   };
 
-    toggleAvailability = () => {
-        const newStatus = !this.state.availabilityOpen;
 
-        this.setState({ availabilityOpen: newStatus });
+  toggleAvailability = () => {
+      const newStatus = !this.state.availabilityOpen;
 
-        // Get all users
-        const users = JSON.parse(localStorage.getItem("users")) || [];
-        const user = JSON.parse(localStorage.getItem("user"));
+      this.setState({ availabilityOpen: newStatus });
 
-        // Update this therapist's availability
-        const updated = users.map(u => {
-            if (u.email === user.email) {
-            return { ...u, availability: newStatus };
-            }
-            return u;
-        });
+      // Get all users
+      const users = JSON.parse(localStorage.getItem("users")) || [];
+      const user = JSON.parse(localStorage.getItem("user"));
 
-        localStorage.setItem("users", JSON.stringify(updated));
-    };
+      // Update this therapist's availability
+      const updated = users.map(u => {
+          if (u.email === user.email) {
+          return { ...u, availability: newStatus };
+          }
+          return u;
+      });
+
+      localStorage.setItem("users", JSON.stringify(updated));
+  };
 
   handleAppointmentAction = (id, action) => {
     const appointments = this.state.appointments.map(a => {
@@ -111,6 +112,20 @@ class TherapistHomepage extends Component {
     window.location.href = "/";   // redirect to login page
   };
 
+  updateAvailability = async (status) => {
+    const email = user.email;
+
+    try {
+      await API.post("/therapist/availability", { email, availability: status });
+
+      setUser(prev => ({ ...prev, availability: status }));
+
+      localStorage.setItem("user", JSON.stringify({ ...user, availability: status }));
+      alert(`Availability updated to: ${status ? "Available" : "Not Available"}`);
+    } catch (err) {
+      alert("Failed to update availability");
+    }
+  };
 
   render() {
     const { clients, appointments, searchQuery, selectedClient, noteText, availabilityOpen } = this.state;
@@ -144,11 +159,18 @@ class TherapistHomepage extends Component {
               />
             </div>
             <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-              <button className={`availability-btn ${availabilityOpen ? "open" : "closed"}`} onClick={this.toggleAvailability}>
-                {availabilityOpen ? "Accepting Sessions" : "Not Accepting"}
+              <button
+                  className={`availability-btn ${user.availability ? "open" : "closed"}`}
+                  onClick={() => updateAvailability(!user.availability)}
+              >
+                  {user.availability ? "🟢 Available" : "🔴 Not Available"}
               </button>
             </div>
-            <button className="logout-btn" onClick={this.handleLogout}>
+            <button className="logout-btn" onClick={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                navigate("/");
+                }}>
                 <i className="fas fa-sign-out-alt"></i> Logout
             </button>
           </div>

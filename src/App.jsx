@@ -1,9 +1,14 @@
+import React, { useRef, useState } from 'react';
+import { useNavigate, BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import './App.css';
+import '@fortawesome/fontawesome-free/css/all.min.css';
+import API from "./api";
+
 import Homepage from './Homepage';
 import VideosContent from './Videos';
 import ArticlesContent from './Articles';
 import SelfHelpGuidesContent from './SelfHelpGuides';
 import TherapistHomepage from './Components/TherapistHomepage';
-
 
 function LoginSignup() {
   const containerRef = useRef(null);
@@ -13,75 +18,58 @@ function LoginSignup() {
   /* --------------------------
       SIGN UP (Student/Therapist)
   -------------------------- */
-  const handleSignUp = (e) => {
+  const handleSignUp = async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
 
+    const formData = new FormData(e.target);
     const name = formData.get("name");
     const email = formData.get("email");
     const password = formData.get("password");
-    const role = formData.get("role");       // <-- NEW (student/therapist)
+    const role = formData.get("role");
 
-    const users = JSON.parse(localStorage.getItem("users")) || [];
+    try {
+      await API.post("/auth/signup", { name, email, password, role });
 
-    const existingUser = users.find((u) => u.email === email);
-    if (existingUser) {
-      alert("User already exists. Please sign in.");
+      alert("Signup successful! Please sign in.");
       setIsActive(false);
-      return;
+    } catch (err) {
+      alert(err.response?.data?.msg || "Signup failed");
     }
-
-    // Save new user
-    users.push({ name, email, password, role });
-    localStorage.setItem("users", JSON.stringify(users));
-    localStorage.setItem("user", JSON.stringify({ name, email, role }));
-
-    alert("Signup successful! Please sign in.");
-    setIsActive(false);
   };
 
   /* --------------------------
         SIGN IN (Detect Role)
   -------------------------- */
-  const handleSignIn = (e) => {
+  const handleSignIn = async (e) => {
     e.preventDefault();
 
     const formData = new FormData(e.target);
     const email = formData.get("email");
     const password = formData.get("password");
 
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    const user = users.find((u) => u.email === email && u.password === password);
+    try {
+      const res = await API.post("/auth/login", { email, password });
 
-    if (!user) {
-      alert("Invalid email or password");
-      return;
-    }
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
 
-    // Save login session
-    localStorage.setItem("user", JSON.stringify({ 
-      name: user.name, 
-      email: user.email,
-      role: user.role
-    }));
+      alert(`Welcome back, ${res.data.user.name}!`);
 
-    alert(`Welcome back, ${user.name}!`);
-
-    // Redirect based on role
-    if (user.role === "therapist") {
-      navigate("/therapist");
-    } else {
-      navigate("/homepage");
+      if (res.data.user.role === "therapist") {
+        navigate("/therapist");
+      } else {
+        navigate("/homepage");
+      }
+    } catch (err) {
+      alert(err.response?.data?.msg || "Login failed");
     }
   };
 
   return (
     <div id="main">
-      <div ref={containerRef} className={`container ${isActive ? 'active' : ''}`} id="container">
+      <div ref={containerRef} className={`container ${isActive ? 'active' : ''}`}>
 
-        {/* ---------------------
-              SIGN UP FORM
-        ---------------------- */}
+        {/* SIGN UP */}
         <div className="form-container sign-up">
           <form onSubmit={handleSignUp}>
             <h1>Create Account</h1>
@@ -92,8 +80,8 @@ function LoginSignup() {
             <input type="email" name="email" placeholder="Email" required />
             <input type="password" name="password" placeholder="Password" required />
 
-            {/* NEW: Role selection */}
-            <select name="role" required style={{ padding: "0.7rem", borderRadius: "8px", border: "1px solid #ccc" }}>
+            {/* ROLE DROPDOWN */}
+            <select name="role" required>
               <option value="student">Student</option>
               <option value="therapist">Therapist</option>
             </select>
@@ -102,13 +90,10 @@ function LoginSignup() {
           </form>
         </div>
 
-        {/* ---------------------
-             SIGN IN FORM
-        ---------------------- */}
+        {/* SIGN IN */}
         <div className="form-container sign-in">
           <form onSubmit={handleSignIn}>
             <h1>Sign In</h1>
-
             <span>or use your email and password</span>
 
             <input type="email" name="email" placeholder="Email" required />
@@ -118,9 +103,7 @@ function LoginSignup() {
           </form>
         </div>
 
-        {/* ---------------------
-            TOGGLE PANELS
-        ---------------------- */}
+        {/* TOGGLE PANELS */}
         <div className="toggle-container">
           <div className="toggle">
             <div className="toggle-panel toggle-left">
@@ -149,11 +132,21 @@ function App() {
   return (
     <Router>
       <Routes>
+
+        {/* DEFAULT ROUTE: LOGIN PAGE */}
+        <Route path="/" element={<LoginSignup />} />
+
+        {/* Student Dashboard */}
         <Route path="/homepage" element={<Homepage />} />
+
+        {/* Extra Pages */}
         <Route path="/videos" element={<VideosContent />} />
         <Route path="/articles" element={<ArticlesContent />} />
         <Route path="/guides" element={<SelfHelpGuidesContent />} />
+
+        {/* Therapist Dashboard */}
         <Route path="/therapist" element={<TherapistHomepage />} />
+
       </Routes>
     </Router>
   );

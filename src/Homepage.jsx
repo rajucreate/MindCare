@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import TherapistHomepage from "./Components/TherapistHomepage";
 import './homepage.css';
+import API from "../api";   
 
 class Homepage extends Component {
   constructor(props) {
@@ -18,19 +19,21 @@ class Homepage extends Component {
     };
   }
 
-  componentDidMount() {
+  async componentDidMount() {
+    // Load logged-in user
     const userStr = localStorage.getItem("user");
     if (userStr) {
       this.setState({ user: JSON.parse(userStr) });
     }
 
-    // NEW: Load therapists for student dashboard
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    const therapists = users.filter(u => u.role === "therapist");
-
-    this.setState({ therapists });
-  } 
-
+    // Load therapist list from backend
+    try {
+      const res = await API.get("/therapist/all");
+      this.setState({ therapists: res.data });
+    } catch (err) {
+      console.error("Failed to fetch therapists:", err);
+    }
+  }
 
   handleTabClick = (tab) => {
     this.setState({ activeTab: tab });
@@ -133,8 +136,9 @@ class Homepage extends Component {
           <button 
             className="logout-btn" 
             onClick={() => {
-              localStorage.removeItem("user");
-              window.location.href = "/";
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                navigate("/");
             }}
           >
             <i className="fas fa-sign-out-alt"></i> Logout
