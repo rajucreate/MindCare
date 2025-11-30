@@ -146,6 +146,16 @@ class Homepage extends Component {
               <i className={this.state.darkMode ? "fas fa-sun" : "fas fa-moon"}></i>
             </button>
             <button className="emergency">Emergency Help</button>
+            <button 
+              className="logout-btn"
+              onClick={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                window.location.href = "/";
+              }}
+            >
+              <i className="fas fa-sign-out-alt"></i> Logout
+            </button>
           </div>
         </header>
 
