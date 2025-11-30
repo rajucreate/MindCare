@@ -1,21 +1,36 @@
+import React, { useState, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+
 import Homepage from './Homepage';
 import VideosContent from './Videos';
 import ArticlesContent from './Articles';
 import SelfHelpGuidesContent from './SelfHelpGuides';
 import TherapistHomepage from './Components/TherapistHomepage';
+import TherapistAvailability from './Components/TherapistAvailability';
+import ForgotPassword from './Components/ForgotPassword';
+import ResetPassword from './Components/ResetPassword';
+import '@fortawesome/fontawesome-free/css/all.min.css';
+import ReCAPTCHA from "react-google-recaptcha";
+import API from './api';
+import './App.css';
 
+const SITE_KEY = "6Ld-VBwsAAAAADMe2ddP_kD4YBbZhwO6tKkOa3vC";
 
 function LoginSignup() {
   const containerRef = useRef(null);
-  const [isActive, setIsActive] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState("");
   const navigate = useNavigate();
 
-  // SIGN UP
+  const [isActive, setIsActive] = useState(false);
+
+  // Only for SIGN-UP
+  const [signupCaptcha, setSignupCaptcha] = useState("");
+  const signupCaptchaRef = useRef();
+
+  // ------------------ SIGN UP ------------------
   const handleSignUp = async (e) => {
     e.preventDefault();
 
-    if (!captchaToken) {
+    if (!signupCaptcha) {
       alert("Please complete the captcha!");
       return;
     }
@@ -23,43 +38,42 @@ function LoginSignup() {
     const formData = new FormData(e.target);
     const name = formData.get("name");
     const email = formData.get("email");
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return alert("Invalid email format.");
-
-    const allowedDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com"];
-    const domain = email.split("@")[1];
-    if (!allowedDomains.includes(domain))
-      return alert("Email must be Gmail, Yahoo, Outlook etc.");
-
     const password = formData.get("password");
     const role = formData.get("role");
 
     try {
-      await API.post("/auth/signup", { name, email, password, role, captchaToken });
+      await API.post("/auth/signup", {
+        name,
+        email,
+        password,
+        role,
+        captchaToken: signupCaptcha
+      });
 
       alert("Signup successful!");
       setIsActive(false);
+
+      signupCaptchaRef.current.reset();
+      setSignupCaptcha("");
+
     } catch (err) {
       alert(err.response?.data?.msg || "Signup failed");
+      signupCaptchaRef.current.reset();
+      setSignupCaptcha("");
     }
   };
 
-  // SIGN IN
+  // ------------------ SIGN IN (NO CAPTCHA) ------------------
   const handleSignIn = async (e) => {
     e.preventDefault();
 
-    if (!captchaToken) {
-      alert("Please complete the captcha!");
-      return;
-    }
-
     const formData = new FormData(e.target);
-    const email = formData.get("email");
-    const password = formData.get("password");
 
     try {
-      const res = await API.post("/auth/login", { email, password, captchaToken });
+      const res = await API.post("/auth/login", {
+        email: formData.get("email"),
+        password: formData.get("password")
+      });
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
@@ -90,25 +104,24 @@ function LoginSignup() {
               <option value="therapist">Therapist</option>
             </select>
 
-            {/* CAPTCHA */}
-            <ReCAPTCHA sitekey={SITE_KEY} onChange={(token) => setCaptchaToken(token)} />
+            {/* SIGN-UP CAPTCHA */}
+            <ReCAPTCHA
+              sitekey={SITE_KEY}
+              ref={signupCaptchaRef}
+              onChange={(token) => setSignupCaptcha(token)}
+            />
 
             <button type="submit">Sign Up</button>
           </form>
         </div>
 
-        {/* SIGN IN */}
+        {/* SIGN IN (NO CAPTCHA) */}
         <div className="form-container sign-in">
           <form onSubmit={handleSignIn}>
             <h1>Sign In</h1>
 
-            <span>or use your email and password</span>
-
             <input type="email" name="email" placeholder="Email" required />
             <input type="password" name="password" placeholder="Password" required />
-
-            {/* CAPTCHA */}
-            <ReCAPTCHA sitekey={SITE_KEY} onChange={(token) => setCaptchaToken(token)} />
 
             <button type="submit">Sign In</button>
 
@@ -122,7 +135,7 @@ function LoginSignup() {
           </form>
         </div>
 
-        {/* TOGGLE PANELS */}
+        {/* PANELS */}
         <div className="toggle-container">
           <div className="toggle">
             <div className="toggle-panel toggle-left">
@@ -142,6 +155,7 @@ function LoginSignup() {
   );
 }
 
+// ------------------ ROUTES ------------------
 function App() {
   return (
     <Router>
@@ -158,6 +172,6 @@ function App() {
       </Routes>
     </Router>
   );
-} 
+}
 
 export default App;

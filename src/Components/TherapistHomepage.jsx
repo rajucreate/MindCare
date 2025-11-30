@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import API from "../api";
+import { useNavigate } from "react-router-dom";
 import "./therapistHomepage.css";
 
 export default function TherapistHomepage({ user, darkMode }) {
@@ -7,6 +8,7 @@ export default function TherapistHomepage({ user, darkMode }) {
   const [loading, setLoading] = useState(true);
   const [noteMap, setNoteMap] = useState({}); // optional therapist notes per session
   const [actionLoading, setActionLoading] = useState(null); // sessionId being updated
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user || !user._id) {
@@ -72,7 +74,12 @@ export default function TherapistHomepage({ user, darkMode }) {
           <div className="brand"><span>♥</span> MindCare — Therapist</div>
           <div className="sub">Welcome back, <strong>{user?.name}</strong></div>
         </div>
-        <button onClick={() => navigate("/therapist/availability")} className="btn-small">Manage Availability</button>
+        <button 
+          onClick={() => navigate("/therapist/availability")} 
+          className="btn-availability"
+        >
+          <i className="fas fa-calendar-alt"></i> Manage Availability
+        </button>
         <div className="header-actions">
           <button className="btn ghost" onClick={fetchSessions} title="Refresh">⟳ Refresh</button>
           <button className="btn danger" onClick={logout}><i className="fas fa-sign-out-alt"></i> Logout</button>
