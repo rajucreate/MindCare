@@ -14,11 +14,12 @@ import ReCAPTCHA from "react-google-recaptcha";
 import API from './api';
 import './App.css';
 
-const SITE_KEY = "6LdBZhwsAAAAAL1bvH2k-i9HtIxy25hB76WqbDda";
+const SITE_KEY = "6Ld-VBwsAAAAADMe2ddP_kD4YBbZhwO6tKkOa3vC";
 
 function LoginSignup() {
   const containerRef = useRef(null);
   const navigate = useNavigate();
+  
 
   const [isActive, setIsActive] = useState(false);
 
@@ -27,41 +28,57 @@ function LoginSignup() {
   const signupCaptchaRef = useRef();
 
   // ------------------ SIGN UP ------------------
-  const handleSignUp = async (e) => {
-    e.preventDefault();
+const handleSignUp = async (e) => {
+  e.preventDefault();
 
-    if (!signupCaptcha) {
-      alert("Please complete the captcha!");
-      return;
-    }
+  if (!signupCaptcha) {
+    alert("Please complete the captcha!");
+    return;
+  }
 
-    const formData = new FormData(e.target);
-    const name = formData.get("name");
-    const email = formData.get("email");
-    const password = formData.get("password");
-    const role = formData.get("role");
+  const formData = new FormData(e.target);
+  const name = formData.get("name");
+  const email = formData.get("email");
+  const password = formData.get("password");
+  const role = formData.get("role");
 
-    try {
-      await API.post("/auth/signup", {
-        name,
-        email,
-        password,
-        role,
-        captchaToken: signupCaptcha
-      });
+  // Email must contain valid domain
+  const validEmailRegex = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
+  if (!validEmailRegex.test(email)) {
+    alert("Invalid email");
+    return;
+  }
 
-      alert("Signup successful!");
-      setIsActive(false);
+  // Username must contain at least 1 letter
+  const validUsernameRegex = /^(?=.*[A-Za-z])[A-Za-z0-9]+$/;
+  if (!validUsernameRegex.test(name)) {
+    alert("Username must contain at least 1 letter and cannot be only numbers");
+    return;
+  }
 
-      signupCaptchaRef.current.reset();
-      setSignupCaptcha("");
+  try {
+    await API.post("/auth/signup", {
+      name,
+      email,
+      password,
+      role,
+      captchaToken: signupCaptcha
+    });
 
-    } catch (err) {
-      alert(err.response?.data?.msg || "Signup failed");
-      signupCaptchaRef.current.reset();
-      setSignupCaptcha("");
-    }
-  };
+    alert("Signup successful!");
+    setIsActive(false);
+
+    signupCaptchaRef.current.reset();
+    setSignupCaptcha("");
+
+  } catch (err) {
+    alert(err.response?.data?.msg || "Signup failed");
+    signupCaptchaRef.current.reset();
+    setSignupCaptcha("");
+  }
+};
+
+
 
   // ------------------ SIGN IN (NO CAPTCHA) ------------------
   const handleSignIn = async (e) => {
