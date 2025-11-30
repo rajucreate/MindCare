@@ -1,20 +1,9 @@
-import React, { useRef, useState } from "react";
-import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
-import "./App.css";
-import "@fortawesome/fontawesome-free/css/all.min.css";
-import API from "./api";
-import ReCAPTCHA from "react-google-recaptcha";
+import Homepage from './Homepage';
+import VideosContent from './Videos';
+import ArticlesContent from './Articles';
+import SelfHelpGuidesContent from './SelfHelpGuides';
+import TherapistHomepage from './Components/TherapistHomepage';
 
-import Homepage from "./Homepage";
-import VideosContent from "./Videos";
-import ArticlesContent from "./Articles";
-import SelfHelpGuidesContent from "./SelfHelpGuides";
-import TherapistHomepage from "./Components/TherapistHomepage";
-import TherapistAvailability from "./Components/TherapistAvailability";
-import ForgotPassword from "./Components/ForgotPassword";
-import ResetPassword from "./Components/ResetPassword";
-
-const SITE_KEY = "6Ld-VBwsAAAAADMe2ddP_kD4YBbZhwO6tKkOa3vC"; // <-- paste your site key
 
 function LoginSignup() {
   const containerRef = useRef(null);
@@ -112,6 +101,8 @@ function LoginSignup() {
         <div className="form-container sign-in">
           <form onSubmit={handleSignIn}>
             <h1>Sign In</h1>
+
+            <span>or use your email and password</span>
 
             <input type="email" name="email" placeholder="Email" required />
             <input type="password" name="password" placeholder="Password" required />
