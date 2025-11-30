@@ -4,7 +4,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const crypto = require("crypto");
-const transporter = require("../config/nodemailer");
+// const transporter = require("../config/nodemailer");
+const axios = require("axios");
 
 /* ============================================
    SIGNUP (NO EMAIL VERIFICATION)
@@ -50,6 +51,17 @@ router.post("/login", async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ msg: "Invalid email or password" });
+
+    const axios = require("axios");
+
+const captchaVerify = await axios.post(
+  `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET}&response=${req.body.captchaToken}`
+);
+
+if (!captchaVerify.data.success) {
+  return res.status(400).json({ msg: "Captcha validation failed" });
+}
+
 
     const token = jwt.sign(
       { id: user._id, role: user.role },

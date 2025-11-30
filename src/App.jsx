@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useNavigate } from "react-route
 import "./App.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import API from "./api";
+import ReCAPTCHA from "react-google-recaptcha";
 
 import Homepage from "./Homepage";
 import VideosContent from "./Videos";
@@ -13,83 +14,70 @@ import TherapistAvailability from "./Components/TherapistAvailability";
 import ForgotPassword from "./Components/ForgotPassword";
 import ResetPassword from "./Components/ResetPassword";
 
-
+const SITE_KEY = "6Ld-VBwsAAAAADMe2ddP_kD4YBbZhwO6tKkOa3vC"; // <-- paste your site key
 
 function LoginSignup() {
   const containerRef = useRef(null);
   const [isActive, setIsActive] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
   const navigate = useNavigate();
 
-  /* --------------------------
-      SIGN UP (Student/Therapist)
-  -------------------------- */
+  // SIGN UP
   const handleSignUp = async (e) => {
     e.preventDefault();
+
+    if (!captchaToken) {
+      alert("Please complete the captcha!");
+      return;
+    }
 
     const formData = new FormData(e.target);
     const name = formData.get("name");
     const email = formData.get("email");
 
-    // simple regex check
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return alert("Invalid email format.");
 
-    if (!emailRegex.test(email)) {
-      alert("Invalid email format");
-      return;
-    }
-
-    // Allowed domains
-    const allowedDomains = [
-      "gmail.com",
-      "yahoo.com",
-      "outlook.com",
-      "hotmail.com",
-      "icloud.com"
-    ];
-
+    const allowedDomains = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com"];
     const domain = email.split("@")[1];
-
-    if (!allowedDomains.includes(domain)) {
-      alert("Email must be from a valid provider like Gmail, Yahoo, Outlook.");
-      return;
-    }
+    if (!allowedDomains.includes(domain))
+      return alert("Email must be Gmail, Yahoo, Outlook etc.");
 
     const password = formData.get("password");
     const role = formData.get("role");
 
     try {
-      await API.post("/auth/signup", { name, email, password, role });
+      await API.post("/auth/signup", { name, email, password, role, captchaToken });
 
-      alert("Signup successful! Please sign in.");
+      alert("Signup successful!");
       setIsActive(false);
     } catch (err) {
       alert(err.response?.data?.msg || "Signup failed");
     }
   };
 
-  /* --------------------------
-        SIGN IN (Detect Role)
-  -------------------------- */
+  // SIGN IN
   const handleSignIn = async (e) => {
     e.preventDefault();
+
+    if (!captchaToken) {
+      alert("Please complete the captcha!");
+      return;
+    }
 
     const formData = new FormData(e.target);
     const email = formData.get("email");
     const password = formData.get("password");
 
     try {
-      const res = await API.post("/auth/login", { email, password });
+      const res = await API.post("/auth/login", { email, password, captchaToken });
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
       alert(`Welcome back, ${res.data.user.name}!`);
+      navigate(res.data.user.role === "therapist" ? "/therapist" : "/homepage");
 
-      if (res.data.user.role === "therapist") {
-        navigate("/therapist");
-      } else {
-        navigate("/homepage");
-      }
     } catch (err) {
       alert(err.response?.data?.msg || "Login failed");
     }
@@ -97,24 +85,24 @@ function LoginSignup() {
 
   return (
     <div id="main">
-      <div ref={containerRef} className={`container ${isActive ? 'active' : ''}`}>
+      <div ref={containerRef} className={`container ${isActive ? "active" : ""}`}>
 
         {/* SIGN UP */}
         <div className="form-container sign-up">
           <form onSubmit={handleSignUp}>
             <h1>Create Account</h1>
 
-            <span>or use your email for registration</span>
-
             <input type="text" name="name" placeholder="Name" required />
             <input type="email" name="email" placeholder="Email" required />
             <input type="password" name="password" placeholder="Password" required />
 
-            {/* ROLE DROPDOWN */}
             <select name="role" required>
               <option value="student">Student</option>
               <option value="therapist">Therapist</option>
             </select>
+
+            {/* CAPTCHA */}
+            <ReCAPTCHA sitekey={SITE_KEY} onChange={(token) => setCaptchaToken(token)} />
 
             <button type="submit">Sign Up</button>
           </form>
@@ -124,19 +112,22 @@ function LoginSignup() {
         <div className="form-container sign-in">
           <form onSubmit={handleSignIn}>
             <h1>Sign In</h1>
-            <span>or use your email and password</span>
 
             <input type="email" name="email" placeholder="Email" required />
             <input type="password" name="password" placeholder="Password" required />
 
+            {/* CAPTCHA */}
+            <ReCAPTCHA sitekey={SITE_KEY} onChange={(token) => setCaptchaToken(token)} />
+
             <button type="submit">Sign In</button>
+
             <p 
               className="forgot-link"
               onClick={() => navigate("/forgot-password")}
               style={{ cursor: "pointer", marginTop: "10px" }}
             >
               Forgot Password?
-            </p>  
+            </p>
           </form>
         </div>
 
@@ -145,13 +136,11 @@ function LoginSignup() {
           <div className="toggle">
             <div className="toggle-panel toggle-left">
               <h1>Welcome Back!</h1>
-              <p>Enter your credentials to access your dashboard</p>
               <button className="hidden" onClick={() => setIsActive(false)}>Sign In</button>
             </div>
 
             <div className="toggle-panel toggle-right">
               <h1>Hello!</h1>
-              <p>Create your account to get started</p>
               <button className="hidden" onClick={() => setIsActive(true)}>Sign Up</button>
             </div>
           </div>
@@ -162,26 +151,15 @@ function LoginSignup() {
   );
 }
 
-/* --------------------------
-      ROUTING SETUP
--------------------------- */
 function App() {
   return (
     <Router>
       <Routes>
-
-        {/* DEFAULT ROUTE: LOGIN PAGE */}
         <Route path="/" element={<LoginSignup />} />
-
-        {/* Student Dashboard */}
         <Route path="/homepage" element={<Homepage />} />
-
-        {/* Extra Pages */}
         <Route path="/videos" element={<VideosContent />} />
         <Route path="/articles" element={<ArticlesContent />} />
-        <Route path="/guides" element={<SelfHelpGuidesContent />} />
-
-        {/* Therapist Dashboard */}
+        <Route path="/self-help-guides" element={<SelfHelpGuidesContent />} />
         <Route path="/therapist" element={<TherapistHomepage />} />
         <Route path="/therapist/availability" element={<TherapistAvailability />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -189,6 +167,6 @@ function App() {
       </Routes>
     </Router>
   );
-}
+} 
 
 export default App;
