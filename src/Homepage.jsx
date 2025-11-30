@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import TherapistHomepage from "./Components/TherapistHomepage";
 import './homepage.css';
 
 class Homepage extends Component {
@@ -13,8 +12,7 @@ class Homepage extends Component {
       currentMood: "",
       journalEntry: "",
       searchQuery: "",
-      showProfile: false,
-      therapists: []
+      showProfile: false
     };
   }
 
@@ -23,14 +21,12 @@ class Homepage extends Component {
     if (userStr) {
       this.setState({ user: JSON.parse(userStr) });
     }
-
-    // NEW: Load therapists for student dashboard
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-    const therapists = users.filter(u => u.role === "therapist");
-
-    this.setState({ therapists });
-  } 
-
+    const darkMode = localStorage.getItem("darkMode") === "true";
+    this.setState({ darkMode });
+    if (darkMode) {
+      document.body.classList.add("dark-mode");
+    }
+  }
 
   handleTabClick = (tab) => {
     this.setState({ activeTab: tab });
@@ -85,12 +81,33 @@ class Homepage extends Component {
     window.location.href = '/guides';
   };
 
+  navigateToJoinDiscussion = () => {
+    // Navigate to join discussion page
+    window.location.href = '/join-discussion';
+  };
+
+  navigateToStartDiscussion = () => {
+    // Navigate to start discussion page
+    window.location.href = '/start-discussion';
+  };
+
+  navigateToBookSession = () => {
+    // Navigate to book session page
+    window.location.href = '/book-session';
+  };
+
+  navigateToTherapyTab = () => {
+    // Switch to therapy tab
+    this.handleTabClick('therapy');
+  };
+
+  navigateToResourcesTab = () => {
+    // Switch to resources tab
+    this.handleTabClick('resources');
+  };
+
   render() {
     const { activeTab, user } = this.state;
-
-    if (user && user.role === "therapist") {
-      return <TherapistHomepage user={user} darkMode={this.state.darkMode} />;
-    }
 
     return (
       <div>
@@ -130,16 +147,7 @@ class Homepage extends Component {
             </button>
             <button className="emergency">Emergency Help</button>
           </div>
-          <button 
-            className="logout-btn" 
-            onClick={() => {
-              localStorage.removeItem("user");
-              window.location.href = "/";
-            }}
-          >
-            <i className="fas fa-sign-out-alt"></i> Logout
-          </button>
-        </header> 
+        </header>
 
         <div className="dashboard">
           <div className="stats">
@@ -226,7 +234,7 @@ class Homepage extends Component {
                   <br />
                   <em>Friday · 4:00 PM</em>
                 </p>
-                <button>View All Sessions</button>
+                <button onClick={this.navigateToTherapyTab}>View All Sessions</button>
               </div>
               <div className="subcard">
                 <h3><i className="fas fa-star"></i> Recommended for You</h3>
@@ -241,7 +249,7 @@ class Homepage extends Component {
                   <br />
                   Evidence-based strategies · <em>Article</em>
                 </p>
-                <button>Browse All Resources</button>
+                <button onClick={this.navigateToResourcesTab}>Browse All Resources</button>
               </div>
               <div className="subcard progress-card">
                 <h3><i className="fas fa-chart-line"></i> Your Progress</h3>
@@ -281,7 +289,7 @@ class Homepage extends Component {
                 <br />
                 <em>5 hours ago</em>
               </p>
-              <button>Join Discussions</button>
+              <button onClick={this.navigateToJoinDiscussion}>Join Discussions</button>
             </div>
           </div>
 
@@ -411,21 +419,18 @@ class Homepage extends Component {
           <div id="therapy" className={`tab-content ${activeTab === "therapy" ? "active" : ""}`}>
             <div className="section-grid">
               <div className="subcard therapy-card">
-                <div className="subcard therapy-card">
-                  <h3>Your Therapists</h3>
-                  {this.state.therapists.map((t, index) => (
-                    <div key={index} className="therapist-item">
-                      <strong>{t.name}</strong><br />
-                      <span style={{ fontSize: "13px", opacity: 0.8 }}>{t.email}</span><br />
-
-                      {/* Availability Badge */}
-                      <span className={`availability-badge ${t.availability ? "open" : "closed"}`}>
-                        {t.availability ? "🟢 Available" : "🔴 Not Available"}
-                      </span>
-                    </div>
-                  ))}
-                  <button>View Profiles</button>
-                </div>
+                <h3>Your Therapists</h3>
+                <p>
+                  <strong>Dr. Sarah Johnson</strong>
+                  <br />
+                  Cognitive Behavioral Therapy
+                </p>
+                <p>
+                  <strong>Dr. Alan Rivera</strong>
+                  <br />
+                  Mindfulness-Based Therapy
+                </p>
+                <button>View Profiles</button>
               </div>
               <div className="subcard therapy-card">
                 <h3>Upcoming Sessions</h3>
@@ -437,7 +442,7 @@ class Homepage extends Component {
                   <strong>Friday</strong> — 4:00 PM<br />
                   Group Therapy: Anxiety Support
                 </p>
-                <button>Book New Session</button>
+                <button onClick={this.navigateToBookSession}>Book New Session</button>
               </div>
             </div>
           </div>
@@ -457,7 +462,7 @@ class Homepage extends Component {
                   <br />
                   18 replies · Active 3h ago
                 </p>
-                <button>Join Discussion</button>
+                <button onClick={this.navigateToJoinDiscussion}>Join Discussion</button>
               </div>
               <div className="subcard forum-card">
                 <h3>Recent Activity</h3>
@@ -471,7 +476,7 @@ class Homepage extends Component {
                   <br />
                   5 new replies · 5h ago
                 </p>
-                <button>Start New Discussion</button>
+                <button onClick={this.navigateToStartDiscussion}>Start New Discussion</button>
               </div>
             </div>
           </div>

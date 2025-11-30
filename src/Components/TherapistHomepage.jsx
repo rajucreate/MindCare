@@ -1,259 +1,215 @@
-import React, { Component } from "react";
-import './therapistHomepage.css';
+import React, { useEffect, useState } from "react";
+import API from "../api";
+import "./therapistHomepage.css";
 
-class TherapistHomepage extends Component {
-  constructor(props) {
-    super(props);
+export default function TherapistHomepage({ user, darkMode }) {
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [noteMap, setNoteMap] = useState({}); // optional therapist notes per session
+  const [actionLoading, setActionLoading] = useState(null); // sessionId being updated
 
-    // initial data: try localStorage, otherwise seed with sample
-    const clients = JSON.parse(localStorage.getItem("therapistClients")) || [
-      { id: "c1", name: "Raju Kumar", email: "raju@example.com", lastSession: "2025-11-20", notes: [] },
-      { id: "c2", name: "Asha Patel", email: "asha@example.com", lastSession: "2025-11-24", notes: [] }
-    ];
-
-    const appointments = JSON.parse(localStorage.getItem("therapistAppointments")) || [
-      { id: "a1", clientId: "c1", clientName: "Raju Kumar", datetime: "2025-12-02T14:00:00", status: "pending" },
-      { id: "a2", clientId: "c2", clientName: "Asha Patel", datetime: "2025-12-03T16:00:00", status: "confirmed" }
-    ];
-
-    this.state = {
-      clients,
-      appointments,
-      searchQuery: "",
-      selectedClient: null,
-      noteText: "",
-      availabilityOpen: JSON.parse(localStorage.getItem("therapistAvailability")) ?? true
-    };
-  }
-
-  componentDidMount() {
-    // ensure document dark mode follows parent prop
-    if (this.props.darkMode) {
-      document.body.classList.add("dark-mode");
+  useEffect(() => {
+    if (!user || !user._id) {
+      setLoading(false);
+      return;
     }
+    fetchSessions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
-    const user = JSON.parse(localStorage.getItem("user"));
-    const users = JSON.parse(localStorage.getItem("users")) || [];
-
-    const therapist = users.find(u => u.email === user.email);
-    this.setState({
-        availabilityOpen: therapist?.availability ?? false
-    });
-  }
-
-  saveClientsToStorage = (clients) => {
-    localStorage.setItem("therapistClients", JSON.stringify(clients));
+  const fetchSessions = async () => {
+    setLoading(true);
+    try {
+      const res = await API.get(`/sessions/therapist/${user._id}`);
+      // sort by start time (if date/time strings present). Keep as returned otherwise.
+      const sorted = res.data.sort((a, b) => new Date(a.date + " " + a.time) - new Date(b.date + " " + b.time));
+      setSessions(sorted);
+    } catch (err) {
+      console.error("Failed to load sessions", err);
+      alert("Failed to load sessions");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  saveAppointmentsToStorage = (appointments) => {
-    localStorage.setItem("therapistAppointments", JSON.stringify(appointments));
+  const grouped = {
+    pending: sessions.filter(s => s.status === "pending"),
+    accepted: sessions.filter(s => s.status === "accepted"),
+    rejected: sessions.filter(s => s.status === "rejected"),
+    completed: sessions.filter(s => s.status === "completed" || s.status === "finished")
   };
 
-  handleSearch = (e) => {
-    this.setState({ searchQuery: e.target.value });
+  const handleUpdateStatus = async (sessionId, status) => {
+    if (!window.confirm(`Confirm ${status} for this session?`)) return;
+    setActionLoading(sessionId);
+    try {
+      const body = { sessionId, status, therapistNote: noteMap[sessionId] || "" };
+      await API.post("/sessions/update-status", body);
+      // update locally
+      setSessions(prev => prev.map(s => s._id === sessionId ? { ...s, status } : s));
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      alert(err.response?.data?.msg || "Failed to update status");
+    } finally {
+      setActionLoading(null);
+    }
   };
 
-  selectClient = (client) => {
-    this.setState({ selectedClient: client, noteText: "" });
+  const handleNoteChange = (sessionId, value) => {
+    setNoteMap(prev => ({ ...prev, [sessionId]: value }));
   };
 
-  addNote = () => {
-    const { selectedClient, noteText, clients } = this.state;
-    if (!selectedClient || !noteText.trim()) return;
-    const updatedClients = clients.map(c => {
-      if (c.id === selectedClient.id) {
-        const newNote = { id: Date.now(), text: noteText.trim(), date: new Date().toISOString() };
-        return { ...c, notes: [newNote, ...(c.notes || [])] };
-      }
-      return c;
-    });
-    this.setState({ clients: updatedClients, noteText: "" }, () => {
-      this.saveClientsToStorage(this.state.clients);
-      // refresh selected client object reference
-      this.setState({ selectedClient: updatedClients.find(c => c.id === selectedClient.id) });
-    });
-  };
-
-    toggleAvailability = () => {
-        const newStatus = !this.state.availabilityOpen;
-
-        this.setState({ availabilityOpen: newStatus });
-
-        // Get all users
-        const users = JSON.parse(localStorage.getItem("users")) || [];
-        const user = JSON.parse(localStorage.getItem("user"));
-
-        // Update this therapist's availability
-        const updated = users.map(u => {
-            if (u.email === user.email) {
-            return { ...u, availability: newStatus };
-            }
-            return u;
-        });
-
-        localStorage.setItem("users", JSON.stringify(updated));
-    };
-
-  handleAppointmentAction = (id, action) => {
-    const appointments = this.state.appointments.map(a => {
-      if (a.id === id) {
-        if (action === "confirm") return { ...a, status: "confirmed" };
-        if (action === "cancel") return { ...a, status: "cancelled" };
-        if (action === "reschedule") return { ...a, status: "reschedule_requested" };
-      }
-      return a;
-    });
-    this.setState({ appointments }, () => this.saveAppointmentsToStorage(appointments));
-  };
-
-  handleLogout = () => {
+  const logout = () => {
+    localStorage.removeItem("token");
     localStorage.removeItem("user");
-    window.location.href = "/";   // redirect to login page
+    window.location.href = "/";
   };
 
+  return (
+    <div className={`therapist-root ${darkMode ? "dark" : ""}`}>
+      <header className="therapist-header">
+        <div>
+          <div className="brand"><span>♥</span> MindCare — Therapist</div>
+          <div className="sub">Welcome back, <strong>{user?.name}</strong></div>
+        </div>
+        <button onClick={() => navigate("/therapist/availability")} className="btn-small">Manage Availability</button>
+        <div className="header-actions">
+          <button className="btn ghost" onClick={fetchSessions} title="Refresh">⟳ Refresh</button>
+          <button className="btn danger" onClick={logout}><i className="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+      </header>
 
-  render() {
-    const { clients, appointments, searchQuery, selectedClient, noteText, availabilityOpen } = this.state;
-    const filteredClients = clients.filter(c =>
-      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (c.email || "").toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    const upcoming = appointments.filter(a => a.status === "pending" || a.status === "confirmed")
-                                 .sort((a,b) => new Date(a.datetime) - new Date(b.datetime));
-
-    return (
-      <div className="therapist-portal">
-        <header>
-          <div>
-            <div className="brand"><span>♥</span> MindCare - Therapist</div>
-            <div className="greeting">
-              Welcome, {this.props.user?.name}
-              <br />
-              <span style={{ fontSize: "13px", opacity: 0.9 }}>{this.props.user?.email}</span>
-            </div>
+      <div className="therapist-container">
+        <aside className="left-panel">
+          <div className="card stat">
+            <h4>Pending</h4>
+            <div className="big">{grouped.pending.length}</div>
           </div>
-          <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-            <div className="search-container">
-              <input
-                type="text"
-                placeholder="Search clients by name or email..."
-                value={this.state.searchQuery}
-                onChange={this.handleSearch}
-                className="search-input"
-              />
-            </div>
-            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-              <button className={`availability-btn ${availabilityOpen ? "open" : "closed"}`} onClick={this.toggleAvailability}>
-                {availabilityOpen ? "Accepting Sessions" : "Not Accepting"}
-              </button>
-            </div>
-            <button className="logout-btn" onClick={this.handleLogout}>
-                <i className="fas fa-sign-out-alt"></i> Logout
-            </button>
+          <div className="card stat">
+            <h4>Upcoming</h4>
+            <div className="big">{grouped.accepted.length}</div>
           </div>
-        </header>
+          <div className="card stat">
+            <h4>History</h4>
+            <div className="big">{grouped.completed.length + grouped.rejected.length}</div>
+          </div>
+        </aside>
 
-        <div className="dashboard therapist-grid">
-          <div className="left-col">
-            <div className="card">
-              <h3>Upcoming Appointments</h3>
-              {upcoming.length === 0 ? <p>No upcoming appointments.</p> : (
-                upcoming.slice(0, 6).map(a => (
-                  <div key={a.id} className="appointment-item">
-                    <div>
-                      <strong>{a.clientName}</strong><br />
-                      <small>{new Date(a.datetime).toLocaleString()}</small>
-                      <div className="appt-status">Status: {a.status}</div>
+        <main className="main-panel">
+          <section className="section">
+            <div className="section-header">
+              <h3>Pending Requests</h3>
+              <span className="hint">New requests that need your action</span>
+            </div>
+
+            {loading ? <p className="loading">Loading...</p> : (
+              grouped.pending.length === 0 ? (
+                <div className="empty">No pending requests</div>
+              ) : (
+                grouped.pending.map(session => (
+                  <div className="session-card pending" key={session._id}>
+                    <div className="session-left">
+                      <div className="student-name">{session.studentId?.name || "Student"}</div>
+                      <div className="session-meta">{session.date} · {session.time} · {session.mode || "—"}</div>
+                      <div className="student-email">{session.studentId?.email}</div>
+                      {session.reason && <div className="reason">“{session.reason}”</div>}
                     </div>
-                    <div className="appt-actions">
-                      {a.status === "pending" && (
-                        <>
-                          <button onClick={() => this.handleAppointmentAction(a.id, "confirm")}>Confirm</button>
-                          <button onClick={() => this.handleAppointmentAction(a.id, "reschedule")}>Reschedule</button>
-                        </>
-                      )}
-                      {a.status === "confirmed" && <button onClick={() => this.handleAppointmentAction(a.id, "cancel")}>Cancel</button>}
+
+                    <div className="session-right">
+                      <textarea
+                        placeholder="Add a note (optional)"
+                        value={noteMap[session._id] || ""}
+                        onChange={(e) => handleNoteChange(session._id, e.target.value)}
+                        className="note-input"
+                      />
+
+                      <div className="actions">
+                        <button
+                          className="btn accept"
+                          onClick={() => handleUpdateStatus(session._id, "accepted")}
+                          disabled={actionLoading === session._id}
+                        >
+                          {actionLoading === session._id ? "..." : "Accept"}
+                        </button>
+
+                        <button
+                          className="btn warn"
+                          onClick={() => handleUpdateStatus(session._id, "reschedule_requested")}
+                          disabled={actionLoading === session._id}
+                          title="Suggest reschedule (mark as reschedule_requested)"
+                        >
+                          Suggest New Time
+                        </button>
+
+                        <button
+                          className="btn reject"
+                          onClick={() => handleUpdateStatus(session._id, "rejected")}
+                          disabled={actionLoading === session._id}
+                        >
+                          Reject
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))
-              )}
-              <button>View All Appointments</button>
+              )
+            )}
+          </section>
+
+          <section className="section">
+            <div className="section-header">
+              <h3>Upcoming Sessions</h3>
+              <span className="hint">Confirmed sessions</span>
             </div>
 
-            <div className="card" style={{ marginTop: "1rem" }}>
-              <h3>Clients ({clients.length})</h3>
-              {filteredClients.length === 0 ? <p>No clients found.</p> : (
-                <ul className="client-list">
-                  {filteredClients.slice(0, 20).map(client => (
-                    <li key={client.id} onClick={() => this.selectClient(client)} className={selectedClient?.id === client.id ? "selected" : ""}>
-                      <div>
-                        <strong>{client.name}</strong>
-                        <div style={{ fontSize: "12px", opacity: 0.85 }}>{client.email}</div>
-                      </div>
-                      <div style={{ fontSize: "12px" }}>Last: {client.lastSession || "—"}</div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
+            {grouped.accepted.length === 0 ? (
+              <div className="empty">No upcoming sessions</div>
+            ) : grouped.accepted.map(session => (
+              <div className="session-card accepted" key={session._id}>
+                <div className="session-left">
+                  <div className="student-name">{session.studentId?.name}</div>
+                  <div className="session-meta">{session.date} · {session.time} · {session.mode || "—"}</div>
+                  <div className="student-email">{session.studentId?.email}</div>
+                </div>
 
-          <div className="right-col">
-            <div className="card">
-              <h3>Selected Client</h3>
-              {!selectedClient ? (
-                <p style={{ color: "var(--text-light)" }}>Select a client to see notes and session history.</p>
-              ) : (
-                <>
-                  <div className="client-header">
-                    <strong>{selectedClient.name}</strong>
-                    <div style={{ fontSize: "13px", opacity: 0.8 }}>{selectedClient.email}</div>
+                <div className="session-right">
+                  <div className="status-badge green">Accepted</div>
+                  <div className="small-actions">
+                    <button className="btn small" onClick={() => handleUpdateStatus(session._id, "completed")}>Mark Completed</button>
                   </div>
+                </div>
+              </div>
+            ))}
+          </section>
 
-                  <div className="notes-section">
-                    <h4>Session Notes</h4>
-                    <textarea
-                      placeholder="Write a short note after a session..."
-                      value={noteText}
-                      onChange={(e) => this.setState({ noteText: e.target.value })}
-                      rows={4}
-                    />
-                    <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem" }}>
-                      <button onClick={this.addNote} disabled={!noteText.trim()}>Add Note</button>
-                      <button onClick={() => this.setState({ noteText: "" })}>Clear</button>
-                    </div>
+          <section className="section">
+            <div className="section-header">
+              <h3>Session History</h3>
+              <span className="hint">Past and resolved sessions</span>
+            </div>
 
-                    <div style={{ marginTop: "1rem" }}>
-                      <h5>Recent Notes</h5>
-                      {(!selectedClient.notes || selectedClient.notes.length === 0) ? (
-                        <p style={{ color: "var(--text-light)" }}>No notes yet.</p>
-                      ) : (
-                        <ul className="notes-list">
-                          {selectedClient.notes.slice(0, 8).map(n => (
-                            <li key={n.id}>
-                              <div style={{ fontSize: "12px", opacity: 0.8 }}>{new Date(n.date).toLocaleString()}</div>
-                              <div>{n.text}</div>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
+            { (grouped.completed.length + grouped.rejected.length) === 0 ? (
+              <div className="empty">No history yet</div>
+            ) : (
+              [...grouped.completed, ...grouped.rejected].map(session => (
+                <div className={`session-card history ${session.status}`} key={session._id}>
+                  <div className="session-left">
+                    <div className="student-name">{session.studentId?.name}</div>
+                    <div className="session-meta">{session.date} · {session.time}</div>
+                    <div className="student-email">{session.studentId?.email}</div>
+                    {session.therapistNote && <div className="reason">Note: {session.therapistNote}</div>}
+                  </div>
+                  <div className="session-right">
+                    <div className={`status-badge ${session.status === "completed" ? "blue" : "red"}`}>
+                      {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
                     </div>
                   </div>
-                </>
-              )}
-            </div>
-
-            <div className="card" style={{ marginTop: "1rem" }}>
-              <h3>Quick Actions</h3>
-              <button onClick={() => alert("Open messaging (placeholder)")}>Message Selected Client</button>
-              <button onClick={() => alert("Open session resources (placeholder)")}>Share Resource</button>
-            </div>
-          </div>
-        </div>
+                </div>
+              ))
+            )}
+          </section>
+        </main>
       </div>
-    );
-  }
+    </div>
+  );
 }
-
-export default TherapistHomepage;
