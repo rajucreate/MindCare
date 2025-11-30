@@ -14,7 +14,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import API from './api';
 import './App.css';
 
-const SITE_KEY = "6Ld-VBwsAAAAADMe2ddP_kD4YBbZhwO6tKkOa3vC";
+const SITE_KEY = "6LdBZhwsAAAAAL1bvH2k-i9HtIxy25hB76WqbDda";
 
 function LoginSignup() {
   const containerRef = useRef(null);
